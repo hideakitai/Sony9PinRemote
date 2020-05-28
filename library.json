@@ -1,0 +1,20 @@
+{
+    "name": "Sony9PinRemote",
+    "keywords": "serial,rs422,sony9pin,vtr",
+    "description": "RS422 Sony 9-Pin Protocol Remote Controller of VTRs for Arduino",
+    "repository":
+    {
+        "type": "git",
+        "url": "https://github.com/hideakitai/Sony9PinRemote"
+    },
+    "authors":
+    {
+        "name": "Hideaki Tai",
+        "url": "https://github.com/hideakitai",
+        "maintainer": true
+    },
+    "version": "0.1.0",
+    "license": "MIT",
+    "frameworks": "*",
+    "platforms": "*"
+}
