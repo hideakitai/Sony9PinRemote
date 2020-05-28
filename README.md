@@ -134,7 +134,7 @@ void set_playback_loop(const bool b_enable, const bool b_sel);
 // 6 - Sense Request
 void tc_gen_sense(const uint8_t data1);
 void ub_gen_sense(const uint8_t data1);
-void tc_ub_gen_sense(const uint8_t data1)
+void tc_ub_gen_sense(const uint8_t data1);
 void in_data_sense();
 void out_data_sense();
 void a_in_data_sense();
