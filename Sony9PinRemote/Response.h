@@ -127,50 +127,51 @@ namespace sony9pin {
         {
             Serial.print("NAK received ! err = ");
             Serial.println(buffer[2], BIN);
-            Serial.print(err.b_unknown_cmd); Serial.print(" ");
-            Serial.print(err.b_checksum_error); Serial.print(" ");
-            Serial.print(err.b_parity_error); Serial.print(" ");
-            Serial.print(err.b_buffer_overrun); Serial.print(" ");
-            Serial.print(err.b_framing_error); Serial.print(" ");
-            Serial.print(err.b_timeout); Serial.print(" ");
-            Serial.println();
+            if (err.b_unknown_cmd)    Serial.println("Unknown Command");
+            if (err.b_checksum_error) Serial.println("Checksum Error");
+            if (err.b_parity_error)   Serial.println("Parity Error");
+            if (err.b_buffer_overrun) Serial.println("Buffer Overrun");
+            if (err.b_framing_error)  Serial.println("Framing Error");
+            if (err.b_timeout)        Serial.println("Timeout");
         }
 
         void print_status()
         {
-            Serial.print(sts.b_cassette_out); Serial.print(" ");
-            Serial.print(sts.b_local); Serial.print(" ");
-            Serial.println();
-            Serial.print(sts.b_standby); Serial.print(" ");
-            Serial.print(sts.b_stop); Serial.print(" ");
-            Serial.print(sts.b_rewind); Serial.print(" ");
-            Serial.print(sts.b_forward); Serial.print(" ");
-            Serial.print(sts.b_record); Serial.print(" ");
-            Serial.print(sts.b_play); Serial.print(" ");
-            Serial.println();
-            Serial.print(sts.b_servo_lock); Serial.print(" ");
-            Serial.print(sts.b_shuttle); Serial.print(" ");
-            Serial.print(sts.b_jog); Serial.print(" ");
-            Serial.print(sts.b_var); Serial.print(" ");
-            Serial.print(sts.b_direction); Serial.print(" ");
-            Serial.print(sts.b_still); Serial.print(" ");
-            Serial.println();
-            Serial.print(sts.b_auto_mode); Serial.print(" ");
-            Serial.print(sts.b_a_out_set); Serial.print(" ");
-            Serial.print(sts.b_a_in_set); Serial.print(" ");
-            Serial.print(sts.b_out_set); Serial.print(" ");
-            Serial.print(sts.b_in_set); Serial.print(" ");
-            Serial.println();
-            Serial.print(sts.b_select_ee); Serial.print(" ");
-            Serial.print(sts.b_full_ee); Serial.print(" ");
-            Serial.println();
-            Serial.print(sts.b_lamp_still); Serial.print(" ");
-            Serial.print(sts.b_lamp_fwd); Serial.print(" ");
-            Serial.print(sts.b_lamp_rev); Serial.print(" ");
-            Serial.println();
-            Serial.print(sts.b_near_eot); Serial.print(" ");
-            Serial.print(sts.b_eot); Serial.print(" ");
-            Serial.println();
+            Serial.println("<Remote Status>");
+            Serial.println("=================");
+            Serial.print("Cassette Out : "); Serial.println(sts.b_cassette_out);
+            Serial.print("Local        : "); Serial.println(sts.b_local);
+            Serial.println("-----------------");
+            Serial.print("Standby      : "); Serial.println(sts.b_standby);
+            Serial.print("Stop         : "); Serial.println(sts.b_stop);
+            Serial.print("Rewind       : "); Serial.println(sts.b_rewind);
+            Serial.print("Forward      : "); Serial.println(sts.b_forward);
+            Serial.print("Record       : "); Serial.println(sts.b_record);
+            Serial.print("Play         : "); Serial.println(sts.b_play);
+            Serial.println("-----------------");
+            Serial.print("Servo Lock   : "); Serial.println(sts.b_servo_lock);
+            Serial.print("Shuttle      : "); Serial.println(sts.b_shuttle);
+            Serial.print("Jog          : "); Serial.println(sts.b_jog);
+            Serial.print("Var          : "); Serial.println(sts.b_var);
+            Serial.print("Direction    : "); Serial.println(sts.b_direction);
+            Serial.print("Still        : "); Serial.println(sts.b_still);
+            Serial.println("-----------------");
+            Serial.print("Auto Mode    : "); Serial.println(sts.b_auto_mode);
+            Serial.print("Aout Set     : "); Serial.println(sts.b_a_out_set);
+            Serial.print("Ain Set      : "); Serial.println(sts.b_a_in_set);
+            Serial.print("Out Set      : "); Serial.println(sts.b_out_set);
+            Serial.print("In Set       : "); Serial.println(sts.b_in_set);
+            Serial.println("-----------------");
+            Serial.print("Select EE    : "); Serial.println(sts.b_select_ee);
+            Serial.print("Full EE      : "); Serial.println(sts.b_full_ee);
+            Serial.println("-----------------");
+            Serial.print("Lamp Still   : "); Serial.println(sts.b_lamp_still);
+            Serial.print("Lamp Fwd     : "); Serial.println(sts.b_lamp_fwd);
+            Serial.print("Lamp Rev     : "); Serial.println(sts.b_lamp_rev);
+            Serial.println("-----------------");
+            Serial.print("Near EOT     : "); Serial.println(sts.b_near_eot);
+            Serial.print("EOT          : "); Serial.println(sts.b_eot);
+            Serial.println("=================");
         }
 
     private:
