@@ -62,12 +62,14 @@ class Controller
 
     StreamType* stream;
     Response res;
+    bool b_force_send {false};
 
 public:
 
 
-    void attach(StreamType& s)
+    void attach(StreamType& s, const bool force_send = false)
     {
+        b_force_send = force_send;
         stream = &s;
         stream->flush();
         while (stream->available())
@@ -96,7 +98,7 @@ public:
     }
 
 
-    bool ready() const { return !res.busy(); }
+    bool ready() const { return b_force_send ? true : !res.busy(); }
     bool available() const { return available(); }
 
     uint16_t device() const { return res.device_type(); }

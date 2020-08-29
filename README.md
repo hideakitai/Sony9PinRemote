@@ -73,7 +73,7 @@ void loop()
 
 ```C++
 // Sony9PinRemote::Controller
-void attach(StreamType& s);
+void attach(StreamType& s, const bool force_send = false)
 void parse();
 bool parse_until(const uint32_t timeout_ms);
 bool ready() const;
