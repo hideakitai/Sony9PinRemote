@@ -6,8 +6,9 @@ void setup()
 {
     Serial.begin(115200);
     Serial1.begin(Sony9PinSerial::BAUDRATE, Sony9PinSerial::CONFIG);
-    deck.attach(Serial1);
     delay(2000);
+
+    deck.attach(Serial1);
 
     // get device status
     deck.status_sense();
@@ -55,10 +56,30 @@ void loop()
     // if previous command has completed (response has come)
     if (deck.ready())
     {
-        static bool b = false;
-        if (b) deck.play();
-        else   deck.stop();
-        b = !b;
-        delay(2000);
+        if (Serial.available() >= 2)
+        {
+            using namespace Sony9PinRemote;
+
+            char c = Serial.read();
+            while (Serial.available()) Serial.read();
+
+            switch (c)
+            {
+                case 'p': deck.play(); break;
+                case 's': deck.stop(); break;
+                case 'P': deck.sync_play(); break;
+                case 'n': deck.auto_skip(1); break; // next clip
+                case 'N': deck.auto_skip(-1); break; // prev clip
+                case 'c': deck.set_playback_loop(true, LoopMode::SINGLE_CLIP); break;
+                case 't': deck.set_playback_loop(true, LoopMode::TIMELINE); break;
+                case 'l': deck.set_playback_loop(false); break;
+                case '0': deck.set_stop_mode(StopMode::OFF); break;
+                case '1': deck.set_stop_mode(StopMode::FREEZE_ON_LAST_FRAME); break;
+                case '2': deck.set_stop_mode(StopMode::FREEZE_ON_NEXT_CLIP); break;
+                case '3': deck.set_stop_mode(StopMode::SHOW_BLACK); break;
+                case '9': deck.status_sense(); break;
+                default: Serial.print("NO CMD: "); Serial.println(c); break;
+            }
+        }
     }
 }
