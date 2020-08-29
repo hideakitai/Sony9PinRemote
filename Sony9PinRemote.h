@@ -608,19 +608,44 @@ public:
     }
 
     // DESCRIPTION:
+    // UNKNOWN
+    // REPLY: ACK
+    void input_check(uint8_t v)
+    {
+        Serial.print(__func__); Serial.print(" : ");
+        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::INPUT_CHECK, v);
+    }
+
+    // DESCRIPTION:
     // Bit0 loop mode enable, 0 = false, 1 = true
     // Bit1 is single clip/timeline, 0 = single clip, 1 = timeline
     // REPLY: ACK
-    void set_playback_loop(const bool b_enable, const bool b_sel)
+    void set_playback_loop(const bool b_enable, const uint8_t mode = LoopMode::SINGLE_CLIP)
     {
         Serial.print(__func__); Serial.print(" : ");
-        const uint8_t v = (uint8_t)b_enable | ((uint8_t)b_sel << 1);
+        const uint8_t v = (uint8_t)b_enable | ((uint8_t)(mode & 0x01) << 1);
         send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::SET_PLAYBACK_LOOP, v);
     }
 
-    // // DESCRIPTION:
-    // // REPLY: ACK
-    // void appendPreset()
+    // DESCRIPTION:
+    // 0 = Off
+    // 1 = Freeze on last frame of Timeline (not clip)
+    // 2 = Freeze on next clip of Timeline (not clip)
+    // 3 = Show black
+    // REPLY: ACK
+    void set_stop_mode(const uint8_t stop_mode)
+    {
+        Serial.print(__func__); Serial.print(" : ");
+        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::SET_STOP_MODE, stop_mode);
+    }
+
+    // DESCRIPTION:
+    // 2 Bytes for the length N of the clip name
+    // N Bytes for each character of the clip name
+    // 4 Byte in point timecode (format is FFSSMMHH)
+    // 4 Byte out point timecode (format is FFSSMMHH)
+    // REPLY: ACK
+    // void append_preset()
     // {
     //     Serial.print(__func__); Serial.print(" : ");
     //     send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::APPEND_PRESET);
@@ -743,6 +768,49 @@ public:
         Serial.print(__func__); Serial.print(" : ");
         send(Cmd1::SENSE_REQUEST, SenseRequest::RECORD_INHIBIT_SENSE);
     }
+
+
+    // A - Advanced Media Protocol
+
+    // DESCRIPTION:
+    // 8-bit signed number of clips to skip from current clip
+    // REPLY: ACK
+    void auto_skip(const int8_t n)
+    {
+        Serial.print(__func__); Serial.print(" : ");
+        send(Cmd1::ADVANCED_MEDIA_PRTCL, AdvancedMediaProtocol::AUTO_SKIP, (uint8_t)n);
+    }
+
+    // DESCRIPTION:
+    // when x = 0, single clip request
+    // when x = 1, # clips can be specified in the send data
+    // REPLY: IDListing
+    // void list_next_id()
+    // {
+    //     Serial.print(__func__); Serial.print(" : ");
+    //     send(Cmd1::ADVANCED_MEDIA_PRTCL, AdvancedMediaProtocol::LIST_NEXT_ID);
+    // }
+
+
+    // Blackmagic Extensions
+
+    // DESCRIPTION:
+    // 16-bit little endian fractional position [0..65535]
+    // REPLY: ACK
+    // void bmd_seek_to_timeline_position(const uint16_t pos)
+    // {
+    //     Serial.print(__func__); Serial.print(" : ");
+    //     send(Cmd1::SYSTEM_CONTROL, BlackmagicExtensions::SEEK_TO_TIMELINE_POSITION, pos);
+    // }
+
+    // DESCRIPTION:
+    // One-byte signed integer, which is the number of clips to skip (negative for backwards).
+    // REPLY: ACK
+    // void bmd_seek_relative_clip(const int8_t index)
+    // {
+    //     Serial.print(__func__); Serial.print(" : ");
+    //     send(Cmd1::SYSTEM_CONTROL, BlackmagicExtensions::SEEK_RELATIVE_CLIP, index);
+    // }
 
 
     bool is_media_exist() const { return !res.sts.b_cassette_out; } // set if no ssd is present

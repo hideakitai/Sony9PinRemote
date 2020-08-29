@@ -13,6 +13,8 @@ void setup()
 {
     // serial should be set and attach as follows
     Serial1.begin(Sony9PinSerial::BAUDRATE, Sony9PinSerial::CONFIG);
+    delay(2000);
+
     deck.attach(Serial1);
 
     // get device status
@@ -130,7 +132,10 @@ void a_out_reset();
 void preroll_prset(const uint8_t hours, const uint8_t minutes, const uint8_t seconds, const uint8_t frames);
 void auto_mode_off();
 void auto_mode_on();
-void set_playback_loop(const bool b_enable, const bool b_sel);
+void input_check(uint8_t v);
+void set_playback_loop(const bool b_enable, const uint8_t mode = LoopMode::SINGLE_CLIP);
+void set_stop_mode(const uint8_t stop_mode);
+// void append_preset();
 // 6 - Sense Request
 void tc_gen_sense(const uint8_t data1);
 void ub_gen_sense(const uint8_t data1);
@@ -144,6 +149,12 @@ void speed_sense();
 void preroll_time_sense();
 void timer_mode_sense();
 void record_inhibit_sense();
+// A - Advanced Media Protocol
+void auto_skip(const int8_t n);
+// void list_next_id();
+// Blackmagic Extensions
+// void bmd_seek_to_timeline_position(const uint16_t pos)
+// void bmd_seek_relative_clip(const int8_t index)
 // status check
 bool is_media_exist() const;
 bool is_remote_enabled() const;
@@ -171,6 +182,30 @@ bool is_lamp_fwd() const;
 bool is_lamp_rev() const;
 bool is_near_eot() const;
 bool is_eot() const;
+```
+
+### Configuration
+
+```C++
+namespace LoopMode
+{
+    enum : uint8_t
+    {
+        SINGLE_CLIP,
+        TIMELINE
+    };
+}
+
+namespace StopMode
+{
+    enum : uint8_t
+    {
+        OFF,
+        FREEZE_ON_LAST_FRAME,
+        FREEZE_ON_NEXT_CLIP,
+        SHOW_BLACK
+    };
+}
 ```
 
 ### Response Structs

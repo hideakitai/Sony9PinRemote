@@ -166,6 +166,7 @@ namespace sony9pin {
         PRESET_SELECT_CONTROL = 0x40, // ---> device
         SENSE_REQUEST         = 0x60, // ---> device
         SENSE_RETURN          = 0x70, // <--- device
+        ADVANCED_MEDIA_PRTCL  = 0xA0, // <--> device
         NA                    = 0xFF
     };
 
@@ -236,10 +237,12 @@ namespace sony9pin {
             A_IN_RESET        = 0x22,
             A_OUT_RESET       = 0x23,
             PREROLL_PRESET    = 0x31,
+            INPUT_CHECK       = 0x37,
             AUTO_MODE_OFF     = 0x40,
             AUTO_MODE_ON      = 0x41,
             // advanced media protocol
             SET_PLAYBACK_LOOP = 0x42,
+            SET_STOP_MODE     = 0x44,
             APPEND_PRESET     = 0x16
         };
     }
@@ -296,6 +299,23 @@ namespace sony9pin {
         };
     }
 
+    namespace AdvancedMediaProtocol
+    {
+        enum : uint8_t
+        {
+            AUTO_SKIP    = 0x01,
+            LIST_NEXT_ID = 0x15,
+        };
+    }
+
+    namespace BlackmagicExtensions
+    {
+        enum : uint8_t
+        {
+            SEEK_TO_TIMELINE_POSITION = 0x02,
+            SEEK_RELATIVE_CLIP        = 0x08,
+        };
+    }
 
     // Bit Masks
 
@@ -313,7 +333,9 @@ namespace sony9pin {
         enum : uint8_t
         {
             UNKNOWN_CMD    = 0b00000001,
+            NOT_USED_1     = 0b00000010,
             CHECKSUM_ERROR = 0b00000100,
+            NOT_USED_3     = 0b00001000,
             PARITY_ERROR   = 0b00010000,
             BUFFER_OVERRUN = 0b00100000,
             FRAMING_ERROR  = 0b01000000,
@@ -369,6 +391,26 @@ namespace sony9pin {
             BLACKMAGIC_HYPERDECK_STUDIO_MINI_NTSC = 0xF0E0,
             BLACKMAGIC_HYPERDECK_STUDIO_MINI_PAL  = 0xF1E0,
             BLACKMAGIC_HYPERDECK_STUDIO_MINI_24P  = 0xF2E0,
+        };
+    }
+
+    namespace LoopMode
+    {
+        enum : uint8_t
+        {
+            SINGLE_CLIP,
+            TIMELINE
+        };
+    }
+
+    namespace StopMode
+    {
+        enum : uint8_t
+        {
+            OFF,
+            FREEZE_ON_LAST_FRAME,
+            FREEZE_ON_NEXT_CLIP,
+            SHOW_BLACK
         };
     }
 
