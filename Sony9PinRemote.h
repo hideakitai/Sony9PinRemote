@@ -124,7 +124,7 @@ public:
     // When the device receives the DEVICE TYPE REQUEST command
     // DEVICE TYPE return with 2 bytes data will be returned:
     // REPLY: SystemControlReturn::DEVICE_TYPE
-    void device_type()
+    void device_type_request()
     {
         Serial.print(__func__); Serial.print(" : ");
         send(Cmd1::SYSTEM_CONTROL, SystemCtrl::DEVICE_TYPE);
