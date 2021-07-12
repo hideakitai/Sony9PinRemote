@@ -179,7 +179,7 @@ namespace sony9pin {
         {
             LOCAL_DISABLE = 0x0C,
             DEVICE_TYPE   = 0x11,
-            LOCK_ENABLE   = 0x1D
+            LOCAL_ENABLE  = 0x1D
         };
     }
 

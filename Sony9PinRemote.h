@@ -135,10 +135,10 @@ public:
     // When the device is initially powered on, it will be set to the LOCAL ENABLE state.
     // REPLY: ACK
     // HyperDeck NOTE: NOT SUPPORTED
-    void lock_enable()
+    void local_enable()
     {
         Serial.print(__func__); Serial.print(" : ");
-        send(Cmd1::SYSTEM_CONTROL, SystemCtrl::LOCK_ENABLE);
+        send(Cmd1::SYSTEM_CONTROL, SystemCtrl::LOCAL_ENABLE);
     }
 
 
