@@ -151,26 +151,40 @@ struct Status {
 // Cmd1 Lists
 
 enum class Cmd1 : uint8_t {
-    SYSTEM_CONTROL = 0x00,         // ---> device
-    SYSTEM_CONTROL_RETURN = 0x10,  // <--- device
-    TRANSPORT_CONTROL = 0x20,      // ---> device
-    PRESET_SELECT_CONTROL = 0x40,  // ---> device
-    SENSE_REQUEST = 0x60,          // ---> device
-    SENSE_RETURN = 0x70,           // <--- device
-    ADVANCED_MEDIA_PRTCL = 0xA0,   // <--> device
+    SYSTEM_CONTROL = 0x00,            // ---> device
+    SYSTEM_CONTROL_RETURN = 0x10,     // <--- device
+    TRANSPORT_CONTROL = 0x20,         // ---> device
+    PRESET_SELECT_CONTROL = 0x40,     // ---> device
+    SENSE_REQUEST = 0x60,             // ---> device
+    SENSE_RETURN = 0x70,              // <--- device
+    BMD_EXTENSION = 0x80,             // <--> device
+    BMD_ADVANCED_MEDIA_PRTCL = 0xA0,  // <--> device
     NA = 0xFF
 };
 
 // Cmd2 lists based on Cmd1
 
+// 0 - System Control
 namespace SystemCtrl {
     enum : uint8_t {
         LOCAL_DISABLE = 0x0C,
         DEVICE_TYPE = 0x11,
-        LOCAL_ENABLE = 0x1D
+        LOCAL_ENABLE = 0x1D,
+        // Black Magic Advanced Media Protocol
+        BMD_SEEK_TO_TIMELINE_POS = 0x02,
     };
 }
 
+// 1 - System Control Return
+namespace SystemControlReturn {
+    enum : uint8_t {
+        ACK = 0x01,          // auto parse
+        NAK = 0x12,          // auto parse
+        DEVICE_TYPE = 0x11,  // auto parse
+    };
+}
+
+// 2 - Transport Control
 namespace TransportCtrl {
     enum : uint8_t {
         STOP = 0x00,
@@ -183,11 +197,13 @@ namespace TransportCtrl {
         JOG_FWD = 0x11,
         VAR_FWD = 0x12,
         SHUTTLE_FWD = 0x13,
+        FRAME_STEP_FWD = 0x14,
         FAST_REVERSE = 0x20,
         REWIND = 0x20,
         JOG_REV = 0x21,
         VAR_REV = 0x22,
         SHUTTLE_REV = 0x23,
+        FRAME_STEP_REV = 0x24,
         PREROLL = 0x30,
         CUE_UP_WITH_DATA = 0x31,
         SYNC_PLAY = 0x34,
@@ -195,42 +211,92 @@ namespace TransportCtrl {
         PROG_SPEED_PLAY_MINUS = 0x39,
         PREVIEW = 0x40,
         REVIEW = 0x41,
+        AUTO_EDIT = 0x42,
         OUTPOINT_PREVIEW = 0x43,
+        ANTI_CLOG_TIMER_DISABLE = 0x54,  // TODO: NOT IMPLEMENTED
+        ANTI_CLOG_TIMER_ENABLE = 0x55,   // TODO: NOT IMPLEMENTED
         DMC_SET_FWD = 0x5C,
         DMC_SET_REV = 0x5D,
         FULL_EE_OFF = 0x60,
         FULL_EE_ON = 0x61,
         SELECT_EE_ON = 0x63,
-        // advanced media protocol
+        EDIT_OFF = 0x64,
+        EDIT_ON = 0x65,
+        FREEZE_OFF = 0x6A,
+        FREEZE_ON = 0x6B,
+        // BlackMagic Advanced Media Protocol
         CLEAR_PLAYLIST = 0x29,
     };
 }
 
+// 4 - Preset/Select Control
 namespace PresetSelectCtrl {
     enum : uint8_t {
+        TIMER_1_PRESET = 0x00,
+        TIME_CODE_PRESET = 0x04,
+        USER_BIT_PRESET = 0x05,
+        TIMER_1_RESET = 0x08,
         IN_ENTRY = 0x10,
         OUT_ENTRY = 0x11,
+        AUDIO_IN_ENTRY = 0x12,
+        AUDIO_OUT_ENTRY = 0x13,
         IN_DATA_PRESET = 0x14,
         OUT_DATA_PRESET = 0x15,
-        IN_FWD = 0x18,
-        IN_REV = 0x19,
-        OUT_FWD = 0x1A,
-        OUT_REV = 0x1B,
-        IN_RESET = 0x20,
-        OUT_RESET = 0x21,
-        A_IN_RESET = 0x22,
-        A_OUT_RESET = 0x23,
+        AUDIO_IN_DATA_PRESET = 0x16,   // TODO: NOT IMPLEMENTED
+        AUDIO_OUT_DATA_PRESET = 0x17,  // TODO: NOT IMPLEMENTED
+        IN_SHIFT_PLUS = 0x18,
+        IN_SHIFT_MINUS = 0x19,
+        OUT_SHIFT_PLUS = 0x1A,
+        OUT_SHIFT_MINUS = 0x1B,
+        AUDIO_IN_SHIFT_PLUS = 0x1C,
+        AUDIO_IN_SHIFT_MINUS = 0x1D,
+        AUDIO_OUT_SHIFT_PLUS = 0x1E,
+        AUDIO_OUT_SHIFT_MINUS = 0x1F,
+        IN_FLAG_RESET = 0x20,
+        OUT_FLAG_RESET = 0x21,
+        AUDIO_IN_FLAG_RESET = 0x22,
+        AUDIO_OUT_FLAG_RESET = 0x23,
+        IN_RECALL = 0x24,
+        OUT_RECALL = 0x25,
+        AUDIO_IN_RECALL = 0x26,
+        AUDIO_OUT_RECALL = 0x27,
+        LOST_LOCK_RESET = 0x2D,
+        EDIT_PRESET = 0x30,
         PREROLL_PRESET = 0x31,
+        TAPE_AUDIO_SELECT = 0x32,
+        SERVO_REF_SELECT = 0x33,
+        HEAD_SELECT = 0x34,
+        COLOR_FRAME_SELECT = 0x35,
+        TIMER_MODE_SELECT = 0x36,
         INPUT_CHECK = 0x37,
+        EDIT_FIELD_SELECT = 0x3A,
+        FREEZE_MODE_SELECT = 0x3B,
+        RECORD_INHIBIT = 0x3E,  // TODO: NOT IMPLEMENTED
         AUTO_MODE_OFF = 0x40,
         AUTO_MODE_ON = 0x41,
-        // advanced media protocol
+        SPOT_ERASE_OFF = 0x42,
+        SPOT_ERASE_ON = 0x43,
+        AUDIO_SPLIT_OFF = 0x44,
+        AUDIO_SPLIT_ON = 0x45,
+        OUTPUT_H_PHASE = 0x98,          // TODO: NOT IMPLEMENTED
+        OUTPUT_VIDEO_PHASE = 0x9B,      // TODO: NOT IMPLEMENTED
+        AUDIO_INPUT_LEVEL = 0xA0,       // TODO: NOT IMPLEMENTED
+        AUDIO_OUTPUT_LEVEL = 0xA1,      // TODO: NOT IMPLEMENTED
+        AUDIO_ADV_LEVEL = 0xA2,         // TODO: NOT IMPLEMENTED
+        AUDIO_OUTPUT_PHASE = 0xA8,      // TODO: NOT IMPLEMENTED
+        AUDIO_ADV_OUTPUT_PHASE = 0xA9,  // TODO: NOT IMPLEMENTED
+        CROSS_FADE_TIME_PRESET = 0xAA,  // TODO: NOT IMPLEMENTED
+        LOCAL_KEY_MAP = 0xB8,           // TODO: NOT IMPLEMENTED
+        STILL_OFF_TIME = 0xF8,
+        STBY_OFF_TIME = 0xFA,
+        // BlackMagic Advanced Media Protocol
+        APPEND_PRESET = 0x16,  // TODO: NOT IMPLEMENTED
         SET_PLAYBACK_LOOP = 0x42,
-        SET_STOP_MODE = 0x44,
-        APPEND_PRESET = 0x16
+        SET_STOP_MODE = 0x44
     };
 }
 
+// 6 - Sense Request
 namespace SenseRequest {
     enum : uint8_t {
         TIMECODE_GEN_SENSE = 0x0A,
@@ -246,6 +312,7 @@ namespace SenseRequest {
     };
 }
 
+// 7 - Sense Reply
 namespace SenseReturn {
     enum : uint8_t {
         TIMER1_DATA = 0x00,
@@ -269,25 +336,18 @@ namespace SenseReturn {
     };
 }
 
-namespace SystemControlReturn {
+// 8 - BlackMagic Extensions
+namespace BmdExtensions {
     enum : uint8_t {
-        ACK = 0x01,          // auto parse
-        NAK = 0x12,          // auto parse
-        DEVICE_TYPE = 0x11,  // auto parse
+        SEEK_RELATIVE_CLIP = 0x03,
     };
 }
 
-namespace AdvancedMediaProtocol {
+// A - BlackMagic Advanced Media Protocol
+namespace BmdAdvancedMediaProtocol {
     enum : uint8_t {
         AUTO_SKIP = 0x01,
-        LIST_NEXT_ID = 0x15,
-    };
-}
-
-namespace BlackmagicExtensions {
-    enum : uint8_t {
-        SEEK_TO_TIMELINE_POSITION = 0x02,
-        SEEK_RELATIVE_CLIP = 0x08,
+        LIST_NEXT_ID = 0x15,  // TODO: NOT IMPLEMENTED
     };
 }
 

@@ -251,6 +251,15 @@ public:
     }
 
     // DESCRIPTION:
+    // Move the device's material one frame (actual or logical depending on the FORWARD media) forward and pause.
+    // REPLY: ACK
+    void frame_step_forward() {
+        Serial.print(__func__);
+        Serial.print(" : ");
+        send(Cmd1::TRANSPORT_CONTROL, TransportCtrl::FRAME_STEP_FWD);
+    }
+
+    // DESCRIPTION:
     // Moves backward through the material at the highest allowable speed
     // (Usually REWIND 32 to 90 times play speed).
     // REPLY: ACK
@@ -300,6 +309,15 @@ public:
         Serial.print(__func__);
         Serial.print(" : ");
         send(Cmd1::TRANSPORT_CONTROL, TransportCtrl::SHUTTLE_REV, data1, data2);
+    }
+
+    // DESCRIPTION:
+    // Move the device's material one frame (actual or logical depending on the REVERSE media) backward and pause.
+    // REPLY: ACK
+    void frame_step_reverse() {
+        Serial.print(__func__);
+        Serial.print(" : ");
+        send(Cmd1::TRANSPORT_CONTROL, TransportCtrl::FRAME_STEP_REV);
     }
 
     // DESCRIPTION:
@@ -381,10 +399,41 @@ public:
     // DESCRIPTION:
     // UNKNOWN
     // REPLY: ACK
+    void auto_edit() {
+        Serial.print(__func__);
+        Serial.print(" : ");
+        send(Cmd1::TRANSPORT_CONTROL, TransportCtrl::AUTO_EDIT);
+    }
+
+    // DESCRIPTION:
+    // UNKNOWN
+    // REPLY: ACK
     void outpoint_preview() {
         Serial.print(__func__);
         Serial.print(" : ");
         send(Cmd1::TRANSPORT_CONTROL, TransportCtrl::OUTPOINT_PREVIEW);
+    }
+
+    // DESCRIPTION:
+    // UNKNOWN
+    // REPLY: ACK
+    void anti_clog_timer_disable() {
+        Serial.print(__func__);
+        Serial.print(" : ");
+        // send(Cmd1::TRANSPORT_CONTROL, TransportCtrl::ANTI_CLOG_TIMER_DISABLE);
+        // TODO: NOT IMPLEMENTED
+        Serial.println("NOT IMPLEMENTED");
+    }
+
+    // DESCRIPTION:
+    // UNKNOWN
+    // REPLY: ACK
+    void anti_clog_timer_enable() {
+        Serial.print(__func__);
+        Serial.print(" : ");
+        // send(Cmd1::TRANSPORT_CONTROL, TransportCtrl::ANTI_CLOG_TIMER_ENABLE);
+        // TODO: NOT IMPLEMENTED
+        Serial.println("NOT IMPLEMENTED");
     }
 
     // DESCRIPTION:
@@ -440,13 +489,94 @@ public:
     // DESCRIPTION:
     // UNKNOWN
     // REPLY: ACK
-    void clearPlaylist() {
+    void edit_off() {
         Serial.print(__func__);
         Serial.print(" : ");
-        send(Cmd1::TRANSPORT_CONTROL, TransportCtrl::CLEAR_PLAYLIST);
+        send(Cmd1::TRANSPORT_CONTROL, TransportCtrl::EDIT_OFF);
+    }
+
+    // DESCRIPTION:
+    // UNKNOWN
+    // REPLY: ACK
+    void edit_on() {
+        Serial.print(__func__);
+        Serial.print(" : ");
+        send(Cmd1::TRANSPORT_CONTROL, TransportCtrl::EDIT_ON);
+    }
+
+    // DESCRIPTION:
+    // UNKNOWN
+    // REPLY: ACK
+    void freeze_off() {
+        Serial.print(__func__);
+        Serial.print(" : ");
+        send(Cmd1::TRANSPORT_CONTROL, TransportCtrl::FREEZE_OFF);
+    }
+
+    // DESCRIPTION:
+    // UNKNOWN
+    // REPLY: ACK
+    void freeze_on() {
+        Serial.print(__func__);
+        Serial.print(" : ");
+        send(Cmd1::TRANSPORT_CONTROL, TransportCtrl::FREEZE_ON);
     }
 
     // 4 - Preset/Select Control
+
+    // DESCRIPTION:
+    // This command presets the device's control (CTL) counter to the value which has been given by
+    // the DATA-1 to DATA-4 bytes in the command. For the data format, refer to the CUE UP WITH DATA
+    // command. The mode of the Drop Frame (DF) or Non Drop Frame (NDF) is decided according to
+    // bit-6 of DATA-1: DATA 1, BIT 6 Drop Frame
+    // 0 OFF 1 ON
+    // Send: 44 00 00 10 20 01 75 (CTL counter set to 1 hour, 20 minutes, 10 seconds, 0 frames)
+    // REPLY: ACK
+    void timer_1_preset(const uint8_t hours, const uint8_t minutes, const uint8_t seconds, const uint8_t frames) {
+        Serial.print(__func__);
+        Serial.print(" : ");
+        // TODO: need to convert to BCD(Binary Coded Decimal)?
+        // TODO: Drop or Non-Drop
+        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::TIMER_1_PRESET, frames, seconds, minutes, hours);
+    }
+
+    // DESCRIPTION:
+    // Presets the value, given by DATA-1 to DATA-4, to the time code start of the PRESET time code
+    // generator. This command will only effect devices capable of recording time code independent
+    // of the inputs. For the data format, refer to the CUE UP WITH DATA command. The mode of the
+    // Drop Frame (DF) or Non Drop Frame (NDF) is decided according to bit-6 of DATA-1:
+    // DATA 1, BIT 6 Drop Frame
+    // 0 OFF 1 ON
+    // Send: 44 04 00 15 30 00 75 (Preset TC set to 30 minutes, 15 seconds, 0 frames)
+    // REPLY: ACK
+    void time_code_preset(const uint8_t hours, const uint8_t minutes, const uint8_t seconds, const uint8_t frames) {
+        Serial.print(__func__);
+        Serial.print(" : ");
+        // TODO: need to convert to BCD(Binary Coded Decimal)?
+        // TODO: Drop or Non-Drop
+        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::TIME_CODE_PRESET, frames, seconds, minutes, hours);
+    }
+
+    // DESCRIPTION:
+    // Presets the user bit values in the time code recording of the device, if the device supports
+    // user bits, to the value given by DATA-1 to DATA-4 as follows:
+    // Send: 44 05 60 63 44 45 95 (Set UB to 06364454)
+    // REPLY: ACK
+    void user_bit_preset(const uint8_t data1, const uint8_t data2, const uint8_t data3, const uint8_t data4) {
+        Serial.print(__func__);
+        Serial.print(" : ");
+        // TODO: more user-friendly arguments?
+        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::USER_BIT_PRESET, data1, data2, data3, data4);
+    }
+
+    // DESCRIPTION:
+    // Resets the control (CTL) counter to zero.
+    // REPLY: ACK
+    void timer_1_reset() {
+        Serial.print(__func__);
+        Serial.print(" : ");
+        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::TIMER_1_RESET);
+    }
 
     // DESCRIPTION:
     // Store the current position of the device as the in point for the next edit.
@@ -467,6 +597,28 @@ public:
     }
 
     // DESCRIPTION:
+    // UNKNOWN
+    // REPLY: ACK
+    void audio_in_entry() {
+        Serial.print(__func__);
+        Serial.print(" : ");
+        // send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::AUDIO_IN_ENTRY);
+        // TODO: NOT IMPLEMENTED
+        Serial.println("NOT IMPLEMENTED");
+    }
+
+    // DESCRIPTION:
+    // UNKNOWN
+    // REPLY: ACK
+    void audio_out_entry() {
+        Serial.print(__func__);
+        Serial.print(" : ");
+        // send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::AUDIO_OUT_ENTRY);
+        // TODO: NOT IMPLEMENTED
+        Serial.println("NOT IMPLEMENTED");
+    }
+
+    // DESCRIPTION:
     // Set the in point for the next edit to the time specified by DATA-1 through DATA-4.
     // See the CUE UP WITH DATA command for the data format.
     // Send: 44 14 21 16 25 04 68 (Set in point to 4 hours, 25 minutes, 16 seconds, 21 frames)
@@ -474,6 +626,7 @@ public:
     void in_data_preset(const uint8_t hours, const uint8_t minutes, const uint8_t seconds, const uint8_t frames) {
         Serial.print(__func__);
         Serial.print(" : ");
+        // TODO: need to convert to BCD(Binary Coded Decimal)?
         send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::IN_DATA_PRESET, frames, seconds, minutes, hours);
     }
 
@@ -485,7 +638,26 @@ public:
     void out_data_preset(const uint8_t hours, const uint8_t minutes, const uint8_t seconds, const uint8_t frames) {
         Serial.print(__func__);
         Serial.print(" : ");
+        // TODO: need to convert to BCD(Binary Coded Decimal)?
         send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::OUT_DATA_PRESET, frames, seconds, minutes, hours);
+    }
+
+    // DESCRIPTION:
+    // UNKNOWN
+    // REPLY: ACK
+    void audio_in_data_preset() {
+        Serial.print(__func__);
+        Serial.print(" : ");
+        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::AUDIO_IN_DATA_PRESET);
+    }
+
+    // DESCRIPTION:
+    // UNKNOWN
+    // REPLY: ACK
+    void audio_out_data_preset() {
+        Serial.print(__func__);
+        Serial.print(" : ");
+        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::AUDIO_OUT_DATA_PRESET);
     }
 
     // DESCRIPTION:
@@ -494,7 +666,7 @@ public:
     void in_shift_plus() {
         Serial.print(__func__);
         Serial.print(" : ");
-        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::IN_FWD);
+        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::IN_SHIFT_PLUS);
     }
 
     // DESCRIPTION:
@@ -503,7 +675,7 @@ public:
     void in_shift_minus() {
         Serial.print(__func__);
         Serial.print(" : ");
-        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::IN_REV);
+        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::IN_SHIFT_MINUS);
     }
 
     // DESCRIPTION:
@@ -512,7 +684,7 @@ public:
     void out_shift_plus() {
         Serial.print(__func__);
         Serial.print(" : ");
-        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::OUT_FWD);
+        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::OUT_SHIFT_PLUS);
     }
 
     // DESCRIPTION:
@@ -521,43 +693,147 @@ public:
     void out_shift_minus() {
         Serial.print(__func__);
         Serial.print(" : ");
-        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::OUT_REV);
+        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::OUT_SHIFT_MINUS);
+    }
+
+    // DESCRIPTION:
+    // UNKNOWN
+    // REPLY: ACK
+    void audio_in_shift_plus() {
+        Serial.print(__func__);
+        Serial.print(" : ");
+        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::AUDIO_IN_SHIFT_PLUS);
+    }
+
+    // DESCRIPTION:
+    // UNKNOWN
+    // REPLY: ACK
+    void audio_in_shift_minus() {
+        Serial.print(__func__);
+        Serial.print(" : ");
+        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::AUDIO_IN_SHIFT_MINUS);
+    }
+
+    // DESCRIPTION:
+    // UNKNOWN
+    // REPLY: ACK
+    void audio_out_shift_plus() {
+        Serial.print(__func__);
+        Serial.print(" : ");
+        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::AUDIO_OUT_SHIFT_PLUS);
+    }
+
+    // DESCRIPTION:
+    // UNKNOWN
+    // REPLY: ACK
+    void audio_out_shift_minus() {
+        Serial.print(__func__);
+        Serial.print(" : ");
+        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::AUDIO_OUT_SHIFT_MINUS);
     }
 
     // DESCRIPTION:
     // Reset the value of the in point to zero.
     // REPLY: ACK
-    void in_reset() {
+    void in_flag_reset() {
         Serial.print(__func__);
         Serial.print(" : ");
-        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::IN_RESET);
+        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::IN_FLAG_RESET);
     }
 
     // DESCRIPTION:
     // Reset the value of the out point to zero.
     // REPLY: ACK
-    void out_reset() {
+    void out_flag_reset() {
         Serial.print(__func__);
         Serial.print(" : ");
-        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::OUT_RESET);
+        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::OUT_FLAG_RESET);
     }
 
     // DESCRIPTION:
     // UNKNOWN
     // REPLY: ACK
-    void a_in_reset() {
+    void audio_in_flag_reset() {
         Serial.print(__func__);
         Serial.print(" : ");
-        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::A_IN_RESET);
+        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::AUDIO_IN_FLAG_RESET);
     }
 
     // DESCRIPTION:
     // UNKNOWN
     // REPLY: ACK
-    void a_out_reset() {
+    void audio_out_flag_reset() {
         Serial.print(__func__);
         Serial.print(" : ");
-        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::A_OUT_RESET);
+        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::AUDIO_OUT_FLAG_RESET);
+    }
+
+    // DESCRIPTION:
+    // Sets the current in point to the last in point that was set. Whenever the in point is changed
+    // or used, a backup copy of the time code is saved. This time code can be recovered by the
+    // IN RECALL command.
+    // REPLY: ACK
+    void in_recall() {
+        Serial.print(__func__);
+        Serial.print(" : ");
+        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::IN_RECALL);
+    }
+
+    // DESCRIPTION:
+    // Sets the current out point to the last in point that was set. Whenever the out point is
+    // changed or used, a backup copy of the time code is saved. This time code can be recovered
+    // by the OUT RECALL command.
+    // REPLY: ACK
+    void out_recall() {
+        Serial.print(__func__);
+        Serial.print(" : ");
+        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::OUT_RECALL);
+    }
+
+    // DESCRIPTION:
+    // UNKNOWN
+    // REPLY: ACK
+    void audio_in_recall() {
+        Serial.print(__func__);
+        Serial.print(" : ");
+        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::AUDIO_IN_RECALL);
+    }
+
+    // DESCRIPTION:
+    // UNKNOWN
+    // REPLY: ACK
+    void audio_out_recall() {
+        Serial.print(__func__);
+        Serial.print(" : ");
+        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::AUDIO_OUT_RECALL);
+    }
+
+    // DESCRIPTION:
+    // UNKNOWN
+    // REPLY: ACK
+    void lost_lock_reset() {
+        Serial.print(__func__);
+        Serial.print(" : ");
+        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::LOST_LOCK_RESET);
+    }
+
+    // DESCRIPTION:
+    // This command is used for selecting the edit mode and selection of preset audio and video channels.
+    // DATA-1:
+    //         Bit 7 Bit 6   Bit 5   Bit 4   Bit 3   Bit 2    Bit 1    Bit 0
+    //               Insert Assemble Video           TC       A2 (Cue) A1 (Cue)
+    // DATA-2:
+    //         Bit 7 Bit 6   Bit 5   Bit 4   Bit 3   Bit 2    Bit 1    Bit 0
+    //                                       DA4     DA3      DA2      DA1
+    // when the 41.30 command is used, the audio channels are set as per the table in the Edit :
+    // Setup menu.When the 42.30 command is used and Bit1 or Bit0 of Data - 1 are "1",
+    // the Cue channel is selected.
+    // REPLY: ACK
+    void edit_preset(const uint8_t data1, const uint8_t data2) {
+        Serial.print(__func__);
+        Serial.print(" : ");
+        // TODO: more user-friendly arguments?
+        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::EDIT_PRESET, data1, data2);
     }
 
     // DESCRIPTION:
@@ -569,7 +845,97 @@ public:
     void preroll_prset(const uint8_t hours, const uint8_t minutes, const uint8_t seconds, const uint8_t frames) {
         Serial.print(__func__);
         Serial.print(" : ");
+        // TODO: need to convert to BCD(Binary Coded Decimal)?
         send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::PREROLL_PRESET, frames, seconds, minutes, hours);
+    }
+
+    // DESCRIPTION:
+    // UNKNOWN
+    // REPLY: ACK
+    void tape_audio_select(const uint8_t v) {
+        Serial.print(__func__);
+        Serial.print(" : ");
+        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::TAPE_AUDIO_SELECT, v);
+    }
+
+    // DESCRIPTION:
+    // UNKNOWN
+    // REPLY: ACK
+    void servo_ref_select(const uint8_t v) {
+        Serial.print(__func__);
+        Serial.print(" : ");
+        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::SERVO_REF_SELECT, v);
+    }
+
+    // DESCRIPTION:
+    // UNKNOWN
+    // REPLY: ACK
+    void head_select(const uint8_t v) {
+        Serial.print(__func__);
+        Serial.print(" : ");
+        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::HEAD_SELECT, v);
+    }
+
+    // DESCRIPTION:
+    // UNKNOWN
+    // REPLY: ACK
+    void color_frame_select(const uint8_t v) {
+        Serial.print(__func__);
+        Serial.print(" : ");
+        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::COLOR_FRAME_SELECT, v);
+    }
+
+    // DESCRIPTION:
+    // Selects the default timer to return, by the DATA-1 value as follows:
+    // DATA - 1
+    //   00 : Time Code
+    //   01 : Control(CTL) Counter
+    //   FF : device setting dependent.
+    // Send : 41 36 11 88(Set the device to time code head)
+    // REPLY: ACK
+    void timer_mode_select(const uint8_t v) {
+        Serial.print(__func__);
+        Serial.print(" : ");
+        // TODO: more user-friendly arguments?
+        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::TIMER_MODE_SELECT, v);
+    }
+
+    // DESCRIPTION:
+    // UNKNOWN
+    // REPLY: ACK
+    void input_check(const uint8_t v) {
+        Serial.print(__func__);
+        Serial.print(" : ");
+        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::INPUT_CHECK, v);
+    }
+
+    // DESCRIPTION:
+    // UNKNOWN
+    // REPLY: ACK
+    void edit_field_select(const uint8_t v) {
+        Serial.print(__func__);
+        Serial.print(" : ");
+        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::EDIT_FIELD_SELECT, v);
+    }
+
+    // DESCRIPTION:
+    // UNKNOWN
+    // REPLY: ACK
+    void freeze_mode_select(const uint8_t v) {
+        Serial.print(__func__);
+        Serial.print(" : ");
+        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::FREEZE_MODE_SELECT, v);
+    }
+
+    // DESCRIPTION:
+    // UNKNOWN
+    // REPLY: ACK
+    void record_inhibit(const uint8_t v) {
+        Serial.print(__func__);
+        Serial.print(" : ");
+        // send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::INPUT_CHECK, v);
+        // TODO: NOT IMPLEMENTED
+        Serial.println("NOT IMPLEMENTED");
     }
 
     // DESCRIPTION:
@@ -593,46 +959,190 @@ public:
     // DESCRIPTION:
     // UNKNOWN
     // REPLY: ACK
-    void input_check(uint8_t v) {
+    void spot_erase_off() {
         Serial.print(__func__);
         Serial.print(" : ");
-        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::INPUT_CHECK, v);
+        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::SPOT_ERASE_OFF);
     }
 
     // DESCRIPTION:
-    // Bit0 loop mode enable, 0 = false, 1 = true
-    // Bit1 is single clip/timeline, 0 = single clip, 1 = timeline
+    // UNKNOWN
     // REPLY: ACK
-    void set_playback_loop(const bool b_enable, const uint8_t mode = LoopMode::SINGLE_CLIP) {
+    void spot_erase_on() {
         Serial.print(__func__);
         Serial.print(" : ");
-        const uint8_t v = (uint8_t)b_enable | ((uint8_t)(mode & 0x01) << 1);
-        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::SET_PLAYBACK_LOOP, v);
+        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::SPOT_ERASE_ON);
     }
 
     // DESCRIPTION:
-    // 0 = Off
-    // 1 = Freeze on last frame of Timeline (not clip)
-    // 2 = Freeze on next clip of Timeline (not clip)
-    // 3 = Show black
+    // UNKNOWN
     // REPLY: ACK
-    void set_stop_mode(const uint8_t stop_mode) {
+    void audio_split_off() {
         Serial.print(__func__);
         Serial.print(" : ");
-        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::SET_STOP_MODE, stop_mode);
+        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::AUDIO_SPLIT_OFF);
     }
 
     // DESCRIPTION:
-    // 2 Bytes for the length N of the clip name
-    // N Bytes for each character of the clip name
-    // 4 Byte in point timecode (format is FFSSMMHH)
-    // 4 Byte out point timecode (format is FFSSMMHH)
+    // UNKNOWN
     // REPLY: ACK
-    // void append_preset()
-    // {
-    //     Serial.print(__func__); Serial.print(" : ");
-    //     send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::APPEND_PRESET);
-    // }
+    void audio_split_on() {
+        Serial.print(__func__);
+        Serial.print(" : ");
+        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::AUDIO_SPLIT_OFF);
+    }
+
+    // DESCRIPTION:
+    // UNKNOWN
+    // REPLY: ACK
+    void output_h_phase() {
+        Serial.print(__func__);
+        Serial.print(" : ");
+        // send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::OUTPUT_H_PHASE);
+        // TODO: NOT IMPLEMENTED
+        Serial.println("NOT IMPLEMENTED");
+    }
+
+    // DESCRIPTION:
+    // UNKNOWN
+    // REPLY: ACK
+    void output_video_phase() {
+        Serial.print(__func__);
+        Serial.print(" : ");
+        // send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::OUTPUT_VIDEO_PHASE);
+        // TODO: NOT IMPLEMENTED
+        Serial.println("NOT IMPLEMENTED");
+    }
+
+    // DESCRIPTION:
+    // UNKNOWN
+    // REPLY: ACK
+    void audio_input_level() {
+        Serial.print(__func__);
+        Serial.print(" : ");
+        // send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::AUDIO_INPUT_LEVEL);
+        // TODO: NOT IMPLEMENTED
+        Serial.println("NOT IMPLEMENTED");
+    }
+
+    // DESCRIPTION:
+    // UNKNOWN
+    // REPLY: ACK
+    void audio_output_level() {
+        Serial.print(__func__);
+        Serial.print(" : ");
+        // send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::AUDIO_OUTPUT_LEVEL);
+        // TODO: NOT IMPLEMENTED
+        Serial.println("NOT IMPLEMENTED");
+    }
+
+    // DESCRIPTION:
+    // UNKNOWN
+    // REPLY: ACK
+    void audio_adv_level() {
+        Serial.print(__func__);
+        Serial.print(" : ");
+        // send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::AUDIO_ADV_LEVEL);
+        // TODO: NOT IMPLEMENTED
+        Serial.println("NOT IMPLEMENTED");
+    }
+
+    // DESCRIPTION:
+    // UNKNOWN
+    // REPLY: ACK
+    void audio_output_phase() {
+        Serial.print(__func__);
+        Serial.print(" : ");
+        // send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::AUDIO_OUTPUT_PHASE);
+        // TODO: NOT IMPLEMENTED
+        Serial.println("NOT IMPLEMENTED");
+    }
+
+    // DESCRIPTION:
+    // UNKNOWN
+    // REPLY: ACK
+    void audio_adv_output_phase() {
+        Serial.print(__func__);
+        Serial.print(" : ");
+        // send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::AUDIO_ADV_OUTPUT_PHASE);
+        // TODO: NOT IMPLEMENTED
+        Serial.println("NOT IMPLEMENTED");
+    }
+
+    // DESCRIPTION:
+    // UNKNOWN
+    // REPLY: ACK
+    void cross_fade_time_preset() {
+        Serial.print(__func__);
+        Serial.print(" : ");
+        // send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::CROSS_FADE_TIME_PRESET);
+        // TODO: NOT IMPLEMENTED
+        Serial.println("NOT IMPLEMENTED");
+    }
+
+    // DESCRIPTION:
+    // When the slave receives the 00.1D Local Enable command, the control panel may be used
+    // according to the local key map that was set by this command. When the slave receives
+    // the 00.0C Local Disable command all the keys, buttons, and adjustment controls
+    // on the control panel are disabled. The Eject button can always be used.
+    // If the slave receives the 41.B8 command, the local key map is preset by the block level
+    // in accordance with DATA-1. IF it receives the 4X.B8 command ( X > 2 ) The local key map is
+    // preset by the Switch level.
+    //
+    // Block Level switches :
+    // -------------------------------------------------------------------------------------------
+    //     Bit 7 Bit 6 Bit 5   Bit 4   Bit 3   Bit 2   Bit 1    Bit 0
+    //                       Tracking Monitor  Audio   Video  Transport
+    //                       Control  Control Control Control  Control
+    //
+    //     "1" : This function will be enabled when in remote
+    //     "0" : This function will be disabled in remote.
+    // When DATA - 2 or more are added, control data with two bytes per each block assigned
+    // by DATA - 1 are added following DATA - 1.
+    //
+    // At present the transport switches are defined as follows :
+    // -------------------------------------------------------------------------------------------
+    //
+    //           Bit 7   Bit 6   Bit 5 Bit 4 Bit 3 Bit 2 Bit 1  Bit 0
+    // 1st Byte Execute Preroll Search        Rec  Play  Stop  Standby
+    // 2nd Byte                                    Var   Jog   Shuttle
+    //
+    // None of the other blocks have any switches assigned, but rather operate as follows :
+    //   Video Control : Video phase and Sync phase can be adjusted on the system menu in remote mode.
+    //   Audio Control : Audio levels and output phase can be adjusted on the Audio : DA out menu in remote mode.
+    //   Monitor Control : the wfm monitor output selection on the system
+    //                   : wfm monitor menu and the montior level adjustments and monitor out selection on the system
+    //                   : audio monitor menu can be adjusted in remote mode.
+    //   Tracking Control : Tracking adjustments in the system
+    //                    : tracking menu can be made in remote mode.
+    // REPLY: ACK
+    void local_key_map() {
+        Serial.print(__func__);
+        Serial.print(" : ");
+        // send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::LOCAL_KEY_MAP);
+        // TODO: NOT IMPLEMENTED
+        Serial.println("NOT IMPLEMENTED");
+    }
+
+    // DESCRIPTION:
+    // UNKNOWN
+    // REPLY: ACK
+    void still_off_time(const uint8_t data1, const uint8_t data2) {
+        Serial.print(__func__);
+        Serial.print(" : ");
+        // TODO: more user-friendly arguments?
+        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::STILL_OFF_TIME, data1, data2);
+    }
+
+    // DESCRIPTION:
+    // UNKNOWN
+    // REPLY: ACK
+    void stby_off_time(const uint8_t data1, const uint8_t data2) {
+        Serial.print(__func__);
+        Serial.print(" : ");
+        // TODO: more user-friendly arguments?
+        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::STBY_OFF_TIME, data1, data2);
+    }
 
     // 6 - Sense Request
 
@@ -751,7 +1261,72 @@ public:
         send(Cmd1::SENSE_REQUEST, SenseRequest::RECORD_INHIBIT_SENSE);
     }
 
-    // A - Advanced Media Protocol
+    // A - BlackMagic Advanced Media Protocol
+
+    // DESCRIPTION:
+    // 16-bit little endian fractional position [0..65535]
+    // REPLY: ACK
+    void bmd_seek_to_timeline_pos(const uint8_t data1, const uint8_t data2) {
+        Serial.print(__func__);
+        Serial.print(" : ");
+        // TODO: more user-friendly arguments?
+        send(Cmd1::SYSTEM_CONTROL, SystemCtrl::BMD_SEEK_TO_TIMELINE_POS, data1, data2);
+    }
+
+    // DESCRIPTION:
+    // UNKNOWN
+    // REPLY: ACK
+    void clearPlaylist() {
+        Serial.print(__func__);
+        Serial.print(" : ");
+        send(Cmd1::TRANSPORT_CONTROL, TransportCtrl::CLEAR_PLAYLIST);
+    }
+
+    // DESCRIPTION:
+    // 2 Bytes for the length N of the clip name
+    // N Bytes for each character of the clip name
+    // 4 Byte in point timecode (format is FFSSMMHH)
+    // 4 Byte out point timecode (format is FFSSMMHH)
+    // REPLY: ACK
+    void append_preset() {
+        Serial.print(__func__);
+        Serial.print(" : ");
+        // send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::APPEND_PRESET);
+        // TODO: NOT IMPLEMENTED
+        Serial.println("NOT IMPLEMENTED");
+    }
+
+    // DESCRIPTION:
+    // Bit0 loop mode enable, 0 = false, 1 = true
+    // Bit1 is single clip/timeline, 0 = single clip, 1 = timeline
+    // REPLY: ACK
+    void set_playback_loop(const bool b_enable, const uint8_t mode = LoopMode::SINGLE_CLIP) {
+        Serial.print(__func__);
+        Serial.print(" : ");
+        const uint8_t v = (uint8_t)b_enable | ((uint8_t)(mode & 0x01) << 1);
+        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::SET_PLAYBACK_LOOP, v);
+    }
+
+    // DESCRIPTION:
+    // 0 = Off
+    // 1 = Freeze on last frame of Timeline (not clip)
+    // 2 = Freeze on next clip of Timeline (not clip)
+    // 3 = Show black
+    // REPLY: ACK
+    void set_stop_mode(const uint8_t stop_mode) {
+        Serial.print(__func__);
+        Serial.print(" : ");
+        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::SET_STOP_MODE, stop_mode);
+    }
+
+    // DESCRIPTION:
+    // One-byte signed integer, which is the number of clips to skip (negative for backwards).
+    // REPLY: ACK
+    void bmd_seek_relative_clip(const int8_t index) {
+        Serial.print(__func__);
+        Serial.print(" : ");
+        send(Cmd1::BMD_EXTENSION, BmdExtensions::SEEK_RELATIVE_CLIP, index);
+    }
 
     // DESCRIPTION:
     // 8-bit signed number of clips to skip from current clip
@@ -759,38 +1334,20 @@ public:
     void auto_skip(const int8_t n) {
         Serial.print(__func__);
         Serial.print(" : ");
-        send(Cmd1::ADVANCED_MEDIA_PRTCL, AdvancedMediaProtocol::AUTO_SKIP, (uint8_t)n);
+        send(Cmd1::BMD_ADVANCED_MEDIA_PRTCL, BmdAdvancedMediaProtocol::AUTO_SKIP, (uint8_t)n);
     }
 
     // DESCRIPTION:
     // when x = 0, single clip request
     // when x = 1, # clips can be specified in the send data
     // REPLY: IDListing
-    // void list_next_id()
-    // {
-    //     Serial.print(__func__); Serial.print(" : ");
-    //     send(Cmd1::ADVANCED_MEDIA_PRTCL, AdvancedMediaProtocol::LIST_NEXT_ID);
-    // }
-
-    // Blackmagic Extensions
-
-    // DESCRIPTION:
-    // 16-bit little endian fractional position [0..65535]
-    // REPLY: ACK
-    // void bmd_seek_to_timeline_position(const uint16_t pos)
-    // {
-    //     Serial.print(__func__); Serial.print(" : ");
-    //     send(Cmd1::SYSTEM_CONTROL, BlackmagicExtensions::SEEK_TO_TIMELINE_POSITION, pos);
-    // }
-
-    // DESCRIPTION:
-    // One-byte signed integer, which is the number of clips to skip (negative for backwards).
-    // REPLY: ACK
-    // void bmd_seek_relative_clip(const int8_t index)
-    // {
-    //     Serial.print(__func__); Serial.print(" : ");
-    //     send(Cmd1::SYSTEM_CONTROL, BlackmagicExtensions::SEEK_RELATIVE_CLIP, index);
-    // }
+    void list_next_id() {
+        Serial.print(__func__);
+        Serial.print(" : ");
+        // send(Cmd1::BMD_ADVANCED_MEDIA_PRTCL, BmdAdvancedMediaProtocol::LIST_NEXT_ID);
+        // TODO: NOT IMPLEMENTED
+        Serial.println("NOT IMPLEMENTED");
+    }
 
     bool is_media_exist() const { return !res.sts.b_cassette_out; }  // set if no ssd is present
     bool is_remote_enabled() const { return !res.sts.b_local; }      // set if remote is disabled (local control)

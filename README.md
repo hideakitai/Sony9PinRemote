@@ -86,10 +86,13 @@ void loop()
 | X | [2X 11] Jog Fwd                 | [10 01] Ack                        |
 | X | [2X 12] Var Fwd                 | [10 01] Ack                        |
 | X | [2X 13] Shuttle Fwd             | [10 01] Ack                        |
+| X | [20 14] Frame Step Fwd          | [10 01] Ack                        |
+| X | [20 20] Fast Reverse            | [10 01] Ack                        |
 | X | [20 20] Rewind                  | [10 01] Ack                        |
 | X | [2X 21] Jog Rev                 | [10 01] Ack                        |
 | X | [2X 22] Var Rev                 | [10 01] Ack                        |
 | X | [2X 23] Shuttle Rev             | [10 01] Ack                        |
+| X | [20 24] Frame Step Rev          | [10 01] Ack                        |
 | X | [20 30] Preroll                 | [10 01] Ack                        |
 | X | [24 31] Cue up with Data        | [10 01] Ack                        |
 | X | [20 34] Sync Play               | [10 01] Ack                        |
@@ -97,7 +100,7 @@ void loop()
 | X | [21 39] Prog Speed Play -       | [10 01] Ack                        |
 | X | [20 40] Preview                 | [10 01] Ack                        |
 | X | [20 41] Review                  | [10 01] Ack                        |
-|   | [20 42] Auto Edit               | [10 01] Ack                        |
+| X | [20 42] Auto Edit               | [10 01] Ack                        |
 | X | [20 43] Outpoint Preview        | [10 01] Ack                        |
 |   | [2X 54] Anti-Clog Timer Disable | [10 01] Ack                        |
 |   | [2X 55] Anti-Clog Timer Enable  | [10 01] Ack                        |
@@ -106,56 +109,56 @@ void loop()
 | X | [20 60] Full EE Off             | [10 01] Ack                        |
 | X | [20 61] Full EE On              | [10 01] Ack                        |
 | X | [20 63] Select EE On            | [10 01] Ack                        |
-|   | [20 64] Edit Off                | [10 01] Ack                        |
-|   | [20 65] Edit On                 | [10 01] Ack                        |
-|   | [20 6A] Freeze Off              | [10 01] Ack                        |
-|   | [20 6B] Freeze On               | [10 01] Ack                        |
-|   | [44 00] Timer-1 Preset          | [10 01] Ack                        |
-|   | [44 04] Time Code Preset        | [10 01] Ack                        |
-|   | [44 05] User Bit Preset         | [10 01] Ack                        |
-|   | [40 08] Timer-1 Reset           | [10 01] Ack                        |
+| X | [20 64] Edit Off                | [10 01] Ack                        |
+| X | [20 65] Edit On                 | [10 01] Ack                        |
+| X | [20 6A] Freeze Off              | [10 01] Ack                        |
+| X | [20 6B] Freeze On               | [10 01] Ack                        |
+| X | [44 00] Timer-1 Preset          | [10 01] Ack                        |
+| X | [44 04] Time Code Preset        | [10 01] Ack                        |
+| X | [44 05] User Bit Preset         | [10 01] Ack                        |
+| X | [40 08] Timer-1 Reset           | [10 01] Ack                        |
 | X | [40 10] In Entry                | [10 01] Ack                        |
 | X | [40 11] Out Entry               | [10 01] Ack                        |
-|   | [40 12] Audio In Entry          | [10 01] Ack                        |
-|   | [40 13] Audio Out Entry         | [10 01] Ack                        |
-| X | [40 14] In Data Preset          | [10 01] Ack                        |
-| X | [40 15] Out Data Preset         | [10 01] Ack                        |
-|   | [40 16] Audio In Data Preset    | [10 01] Ack                        |
-|   | [40 17] Audio Out Data Preset   | [10 01] Ack                        |
+| X | [40 12] Audio In Entry          | [10 01] Ack                        |
+| X | [40 13] Audio Out Entry         | [10 01] Ack                        |
+| X | [44 14] In Data Preset          | [10 01] Ack                        |
+| X | [44 15] Out Data Preset         | [10 01] Ack                        |
+|   | [4? 16] Audio In Data Preset    | [10 01] Ack                        |
+|   | [4? 17] Audio Out Data Preset   | [10 01] Ack                        |
 | X | [40 18] In + Shift              | [10 01] Ack                        |
 | X | [40 19] In - Shift              | [10 01] Ack                        |
 | X | [40 1A] Out + Shift             | [10 01] Ack                        |
 | X | [40 1B] Out - Shift             | [10 01] Ack                        |
-|   | [40 1C] Audio In + Shift        | [10 01] Ack                        |
-|   | [40 1D] Audio In - Shift        | [10 01] Ack                        |
-|   | [40 1E] Audio Out + Shift       | [10 01] Ack                        |
-|   | [40 1F] Audio Out - Shift       | [10 01] Ack                        |
+| X | [40 1C] Audio In + Shift        | [10 01] Ack                        |
+| X | [40 1D] Audio In - Shift        | [10 01] Ack                        |
+| X | [40 1E] Audio Out + Shift       | [10 01] Ack                        |
+| X | [40 1F] Audio Out - Shift       | [10 01] Ack                        |
 | X | [40 20] In Flag Reset           | [10 01] Ack                        |
 | X | [40 21] Out Flag Reset          | [10 01] Ack                        |
 | X | [40 22] Audio In Flag Reset     | [10 01] Ack                        |
 | X | [40 23] Audio Out Flag Reset    | [10 01] Ack                        |
-|   | [40 24] In Recall               | [10 01] Ack                        |
-|   | [40 25] Out Recall              | [10 01] Ack                        |
-|   | [40 26] Audio In Recall         | [10 01] Ack                        |
-|   | [40 27] Audio Out Recall        | [10 01] Ack                        |
-|   | [40 2D] Lost Lock Reset         | [10 01] Ack                        |
-|   | [4X 30] Edit Preset             | [10 01] Ack                        |
+| X | [40 24] In Recall               | [10 01] Ack                        |
+| X | [40 25] Out Recall              | [10 01] Ack                        |
+| X | [40 26] Audio In Recall         | [10 01] Ack                        |
+| X | [40 27] Audio Out Recall        | [10 01] Ack                        |
+| X | [40 2D] Lost Lock Reset         | [10 01] Ack                        |
+| X | [4X 30] Edit Preset             | [10 01] Ack                        |
 | X | [44 31] Preroll time preset     | [10 01] Ack                        |
-|   | [41 32] Tape/Audo Select        | [10 01] Ack                        |
-|   | [41 33] Servo Ref Select        | [10 01] Ack                        |
-|   | [41 34] Head Select             | [10 01] Ack                        |
-|   | [41 35] Color Frame select      | [10 01] Ack                        |
-|   | [41 36] Timer Mode Select       | [10 01] Ack                        |
+| X | [41 32] Tape/Audo Select        | [10 01] Ack                        |
+| X | [41 33] Servo Ref Select        | [10 01] Ack                        |
+| X | [41 34] Head Select             | [10 01] Ack                        |
+| X | [41 35] Color Frame select      | [10 01] Ack                        |
+| X | [41 36] Timer Mode Select       | [10 01] Ack                        |
 | X | [41 37] Input Check             | [10 01] Ack                        |
-|   | [41 3A] Edit Field Select       | [10 01] Ack                        |
-|   | [41 3B] Freeze Mode Select      | [10 01] Ack                        |
+| X | [41 3A] Edit Field Select       | [10 01] Ack                        |
+| X | [41 3B] Freeze Mode Select      | [10 01] Ack                        |
 |   | [4X 3E] Record Inhibit          | [10 01] Ack                        |
 | X | [40 40] Auto Mode Off           | [10 01] Ack                        |
 | X | [40 41] Auto Mode On            | [10 01] Ack                        |
-|   | [40 42] Spot Erase Off          | [10 01] Ack                        |
-|   | [40 43] Spot Erase On           | [10 01] Ack                        |
-|   | [40 44] Audio Split Off         | [10 01] Ack                        |
-|   | [40 45] Audio Split On          | [10 01] Ack                        |
+| X | [40 42] Spot Erase Off          | [10 01] Ack                        |
+| X | [40 43] Spot Erase On           | [10 01] Ack                        |
+| X | [40 44] Audio Split Off         | [10 01] Ack                        |
+| X | [40 45] Audio Split On          | [10 01] Ack                        |
 |   | [4X 98] Output H Phase          | [10 01] Ack                        |
 |   | [4X 9B] Output Video Phase      | [10 01] Ack                        |
 |   | [4X A0] Audio Input Level       | [10 01] Ack                        |
@@ -165,8 +168,8 @@ void loop()
 |   | [4X A9] Audio Adv Out Phase     | [10 01] Ack                        |
 |   | [4X AA] Cross Fade Time Preset  | [10 01] Ack                        |
 |   | [4X B8] Local Key Map           | [10 01] Ack                        |
-|   | [42 F8] Still Off time          | [10 01] Ack                        |
-|   | [42 FA] Stby Off time           | [10 01] Ack                        |
+| X | [42 F8] Still Off time          | [10 01] Ack                        |
+| X | [42 FA] Stby Off time           | [10 01] Ack                        |
 |   | [61 0A] TC Gen Sense            | [74 08] Gen Time Data              |
 |   |                                 | [79 09] Gen User Bits Data         |
 |   |                                 | [74 00] Timer-1 Data               |
@@ -199,6 +202,18 @@ void loop()
 |   | [60 58] DA Samp. Freq. Sense    | [71 58] DA Sampling Frequency Data |
 |   | [61 AA] Cross Fade Time Sense   | [7X AA] Cross Fade Time Data       |
 
+### BlackMagic Advanced Media Protocol
+
+|   | Command (HEX)                   | Response (HEX)                     |
+|---|---------------------------------|------------------------------------|
+| X | [08 02] Bmd Seek To Timeline Pos | [10 01] Ack                        |
+| X | [20 29] Clear Playlist           | [10 01] Ack                        |
+|   | [4F 16] Append Preset            | [10 01] Ack                        |
+| X | [41 42] Set Playback Loop        | [10 01] Ack                        |
+| X | [41 44] Set Stop Mode            | [10 01] Ack                        |
+| X | [81 03] Bmd Seek Relative Clip   | [10 01] Ack                        |
+| X | [A1 01] Auto Skip                | [10 01] Ack                        |
+|   | [AX 15] List Next ID             | [10 01] Ack                        |
 
 ## APIs
 
@@ -240,6 +255,7 @@ void prog_speed_play_plus(const uint8_t v);
 void prog_speed_play_minus(const uint8_t v);
 void preview();
 void review();
+// void auto_edit();
 void outpoint_preview();
 void dmc_set_fwd(const uint8_t data1, const uint8_t data2);
 void dmc_set_rev(const uint8_t data1, const uint8_t data2);
