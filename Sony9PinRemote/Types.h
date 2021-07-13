@@ -189,7 +189,7 @@ namespace TransportCtrl {
         VAR_REV = 0x22,
         SHUTTLE_REV = 0x23,
         PREROLL = 0x30,
-        CUE_DATA = 0x31,
+        CUE_UP_WITH_DATA = 0x31,
         SYNC_PLAY = 0x34,
         PROG_SPEED_PLAY_PLUS = 0x38,
         PROG_SPEED_PLAY_MINUS = 0x39,

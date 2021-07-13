@@ -321,10 +321,10 @@ public:
     // Send: 24 31 13 58 16 02 A7 (Cue to 2 hours, 16 minutes, 58 seconds, 13 frames)
     // Send: 24 31 24 36 52 21 F1 (Cue to 21 hours, 52 minutes, 36 seconds, 24 frames)
     // REPLY: ACK
-    void cue_data(const uint8_t hours, const uint8_t minutes, const uint8_t seconds, const uint8_t frames) {
+    void cue_up_with_data(const uint8_t hours, const uint8_t minutes, const uint8_t seconds, const uint8_t frames) {
         Serial.print(__func__);
         Serial.print(" : ");
-        send(Cmd1::TRANSPORT_CONTROL, TransportCtrl::CUE_DATA, frames, seconds, minutes, hours);
+        send(Cmd1::TRANSPORT_CONTROL, TransportCtrl::CUE_UP_WITH_DATA, frames, seconds, minutes, hours);
     }
 
     // DESCRIPTION:

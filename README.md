@@ -234,7 +234,7 @@ void jog_reverse(const uint8_t data1, const uint8_t data2 = 0);
 void var_reverse(const uint8_t data1, const uint8_t data2 = 0);
 void shuttle_reverse(const uint8_t data1, const uint8_t data2 = 0);
 void preroll();
-void cue_data(const uint8_t hours, const uint8_t minutes, const uint8_t seconds, const uint8_t frames);
+void cue_up_with_data(const uint8_t hours, const uint8_t minutes, const uint8_t seconds, const uint8_t frames);
 void sync_play();
 void prog_speed_play_plus(const uint8_t v);
 void prog_speed_play_minus(const uint8_t v);
