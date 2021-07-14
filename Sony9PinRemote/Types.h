@@ -299,16 +299,27 @@ namespace PresetSelectCtrl {
 // 6 - Sense Request
 namespace SenseRequest {
     enum : uint8_t {
-        TIMECODE_GEN_SENSE = 0x0A,
+        TC_GEN_SENSE = 0x0A,
+        CURRENT_TIME_SENSE = 0x0C,
         IN_DATA_SENSE = 0x10,
         OUT_DATA_SENSE = 0x11,
-        A_IN_DATA_SENSE = 0x12,
-        A_OUT_DATA_SENSE = 0x13,
+        AUDIO_IN_DATA_SENSE = 0x12,
+        AUDIO_OUT_DATA_SENSE = 0x13,
         STATUS_SENSE = 0x20,
-        SPEED_SENSE = 0x2E,
+        EXTENDED_VTR_STATUS = 0x21,
+        SIGNAL_CONTROL_SENSE = 0x23,
+        LOCAL_KEYMAP_SENSE = 0x28,
+        HEAD_METER_SENSE = 0x2A,
+        REMAINING_TIME_SENSE = 0x2B,
+        CMD_SPEED_SENSE = 0x2E,
+        EDIT_PRESET_SENSE = 0x30,
         PREROLL_TIME_SENSE = 0x31,
         TIMER_MODE_SENSE = 0x36,
-        RECORD_INHIBIT_SENSE = 0x3E
+        RECORD_INHIBIT_SENSE = 0x3E,
+        DA_INP_EMPH_SENSE = 0x52,
+        DA_PB_EMPH_SENSE = 0x53,
+        DA_SAMP_FREQ_SENSE = 0x58,
+        CROSS_FADE_TIME_SENSE = 0xAA,
     };
 }
 
@@ -432,6 +443,26 @@ namespace StopMode {
         FREEZE_ON_LAST_FRAME,
         FREEZE_ON_NEXT_CLIP,
         SHOW_BLACK
+    };
+}
+
+// 61.0A TC Generator Data Types
+namespace TcGenData {
+    enum : uint8_t {
+        TC = 0x01,    // 74.08 GEN TIME DATA Respond
+        UB = 0x10,    // 74.09 GEN UB DATA Respond
+        TC_UB = 0x11  // 78.08 GEN TC & UB DATA Respond
+    };
+}
+
+namespace CurrentTimeSenseFlag {
+    enum : uint8_t {
+        LTC_TIME = 0x01,
+        VITC_TIME = 0x02,
+        TIMER_1 = 0x04,
+        TIMER_2 = 0x08,
+        LTC_UB = 0x10,
+        VITC_UB = 0x20,
     };
 }
 

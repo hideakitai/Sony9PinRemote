@@ -1157,17 +1157,33 @@ public:
     void tc_gen_sense(const uint8_t data1) {
         Serial.print(__func__);
         Serial.print(" : ");
-        send(Cmd1::SENSE_REQUEST, SenseRequest::TIMECODE_GEN_SENSE, 0x01);
+        send(Cmd1::SENSE_REQUEST, SenseRequest::TC_GEN_SENSE, data1);
     }
-    void ub_gen_sense(const uint8_t data1) {
+    void tc_gen_sense_tc() {
+        tc_gen_sense(TcGenData::TC);
+    }
+    void tc_gen_sense_ub() {
+        tc_gen_sense(TcGenData::UB);
+    }
+    void tc_ub_gen_sense_tc_and_ub() {
+        tc_gen_sense(TcGenData::TC_UB);
+    }
+
+    // DESCRIPTION:
+    // Requests the time data or user bit. The device will respond according to the SENSE DATA-1 contents, indicated by the CURRENT TIME SENSE RETURN chart.
+    // Send: 61 0C 04 11 (Request CTL counter position)
+    // Returns : 74 00 01 02 03 04 7E(Return 04 : 03 : 02 : 01)
+    // Send : 61 0C 03 11(Request LTC or VITC time code position)
+    // Returns : 74 14 10 20 30 24 7E(Return 24 : 30 : 20 : 10 LTC Interpolated w / CTL)
+    // Send : 61 0C 02 10(Request LTC or VITC time code position)
+    // Returns : 78 16 12 25 00 00 10 56 9A C5(Return 24 : 30 : 20 : 10 LTC Interpolated w / CTL)
+    //
+    // REPLY: based on CURRENT TIME SENSE RETURN chart
+    // https://www.drastic.tv/images/protocol/p_tcrtn.gif
+    void current_time_sense(const uint8_t data1) {
         Serial.print(__func__);
         Serial.print(" : ");
-        send(Cmd1::SENSE_REQUEST, SenseRequest::TIMECODE_GEN_SENSE, 0x10);
-    }
-    void tc_ub_gen_sense(const uint8_t data1) {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::SENSE_REQUEST, SenseRequest::TIMECODE_GEN_SENSE, 0x11);
+        send(Cmd1::SENSE_REQUEST, SenseRequest::CURRENT_TIME_SENSE, data1);
     }
 
     // DESCRIPTION:
@@ -1193,19 +1209,19 @@ public:
     // DESCRIPTION:
     // UNKNOWN
     // REPLY: A_IN_DATA
-    void a_in_data_sense() {
+    void audio_in_data_sense() {
         Serial.print(__func__);
         Serial.print(" : ");
-        send(Cmd1::SENSE_REQUEST, SenseRequest::A_IN_DATA_SENSE);
+        send(Cmd1::SENSE_REQUEST, SenseRequest::AUDIO_IN_DATA_SENSE);
     }
 
     // DESCRIPTION:
     // UNKNOWN
     // REPLY: A_OUT_DATA
-    void a_out_data_sense() {
+    void audio_out_data_sense() {
         Serial.print(__func__);
         Serial.print(" : ");
-        send(Cmd1::SENSE_REQUEST, SenseRequest::A_OUT_DATA_SENSE);
+        send(Cmd1::SENSE_REQUEST, SenseRequest::AUDIO_OUT_DATA_SENSE);
     }
 
     // DESCRIPTION:
@@ -1227,11 +1243,67 @@ public:
 
     // DESCRIPTION:
     // UNKNOWN
-    // REPLY: SPEED_DATA
-    void speed_sense() {
+    // REPLY: ACK
+    void extended_vtr_status(const uint8_t data1) {
         Serial.print(__func__);
         Serial.print(" : ");
-        send(Cmd1::SENSE_REQUEST, SenseRequest::SPEED_SENSE);
+        send(Cmd1::SENSE_REQUEST, SenseRequest::EXTENDED_VTR_STATUS, data1);
+    }
+
+    // DESCRIPTION:
+    // UNKNOWN
+    // REPLY: ACK
+    void signal_control_sense(const uint8_t data1, const uint8_t data2) {
+        Serial.print(__func__);
+        Serial.print(" : ");
+        send(Cmd1::SENSE_REQUEST, SenseRequest::SIGNAL_CONTROL_SENSE, data1, data2);
+    }
+
+    // DESCRIPTION:
+    // UNKNOWN
+    // REPLY: ACK
+    void local_keymap_sense() {
+        Serial.print(__func__);
+        Serial.print(" : ");
+        // send(Cmd1::SENSE_REQUEST, SenseRequest::LOCAL_KEYMAP_SENSE);
+        // TODO: NOT IMPLEMENTED
+        Serial.println("NOT IMPLEMENTED");
+    }
+
+    // DESCRIPTION:
+    // UNKNOWN
+    // REPLY: ACK
+    void head_meter_sense(const uint8_t data1) {
+        Serial.print(__func__);
+        Serial.print(" : ");
+        send(Cmd1::SENSE_REQUEST, SenseRequest::HEAD_METER_SENSE, data1);
+    }
+
+    // DESCRIPTION:
+    // UNKNOWN
+    // REPLY: ACK
+    void remaining_time_sense() {
+        Serial.print(__func__);
+        Serial.print(" : ");
+        send(Cmd1::SENSE_REQUEST, SenseRequest::REMAINING_TIME_SENSE);
+    }
+
+    // DESCRIPTION:
+    // UNKNOWN
+    // REPLY: SPEED_DATA
+    void cmd_speed_sense() {
+        Serial.print(__func__);
+        Serial.print(" : ");
+        send(Cmd1::SENSE_REQUEST, SenseRequest::CMD_SPEED_SENSE);
+    }
+
+    // DESCRIPTION:
+    // UNKNOWN
+    // REPLY: ACK
+    void edit_preset_sense(const uint8_t data1) {
+        Serial.print(__func__);
+        Serial.print(" : ");
+        send(Cmd1::SENSE_REQUEST, SenseRequest::EDIT_PRESET_SENSE, data1);
     }
 
     // DESCRIPTION:
@@ -1259,6 +1331,42 @@ public:
         Serial.print(__func__);
         Serial.print(" : ");
         send(Cmd1::SENSE_REQUEST, SenseRequest::RECORD_INHIBIT_SENSE);
+    }
+
+    // DESCRIPTION:
+    // UNKNOWN
+    // REPLY: RECORD_INHIBIT_STATUS
+    void da_inp_emph_sense() {
+        Serial.print(__func__);
+        Serial.print(" : ");
+        send(Cmd1::SENSE_REQUEST, SenseRequest::DA_INP_EMPH_SENSE);
+    }
+
+    // DESCRIPTION:
+    // UNKNOWN
+    // REPLY: RECORD_INHIBIT_STATUS
+    void da_pb_emph_sense() {
+        Serial.print(__func__);
+        Serial.print(" : ");
+        send(Cmd1::SENSE_REQUEST, SenseRequest::DA_PB_EMPH_SENSE);
+    }
+
+    // DESCRIPTION:
+    // UNKNOWN
+    // REPLY: RECORD_INHIBIT_STATUS
+    void da_samp_freq_sense() {
+        Serial.print(__func__);
+        Serial.print(" : ");
+        send(Cmd1::SENSE_REQUEST, SenseRequest::DA_SAMP_FREQ_SENSE);
+    }
+
+    // DESCRIPTION:
+    // UNKNOWN
+    // REPLY: RECORD_INHIBIT_STATUS
+    void cross_fade_time_sense(const uint8_t data1) {
+        Serial.print(__func__);
+        Serial.print(" : ");
+        send(Cmd1::SENSE_REQUEST, SenseRequest::CROSS_FADE_TIME_SENSE, data1);
     }
 
     // A - BlackMagic Advanced Media Protocol
