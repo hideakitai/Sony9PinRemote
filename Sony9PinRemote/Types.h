@@ -26,38 +26,74 @@ struct Errors {
 
 struct Status {
     // byte 0
-    bool b_cassette_out;  // set if no ssd is present
-    bool b_local;         // set if remote is disabled (local control)
+    bool b_cassette_out;       // set if no ssd is present
+    bool b_servo_ref_missing;  // set if servo reference is absent
+    bool b_local;              // set if remote is disabled (local control)
     // byte 1
     bool b_standby;  // set if a disk is available
-    bool b_stop;
-    bool b_rewind;
-    bool b_forward;
-    bool b_record;
-    bool b_play;
+    bool b_stop;     // When the machine is in full stop, this is 1. The thread state depends on the tape/ee and standby settings.
+    bool b_eject;    // When the tape is ejecting this is 1.
+    bool b_rewind;   // When the machine is in fast reverse this is 1.
+    bool b_forward;  // When the machine is in fast forward this is 1.
+    bool b_record;   // This bit goes from 0 to 1 some number of frames after the machine starts recording. For the DVR2000 we measured 5 frames. Others have varying delays on the record status.
+    bool b_play;     // This bit goes from 0 to 1 some number of frames after the machine starts playing. For the DVR2000 we measured 5 frames. Others have varying delays on the play status.
     // byte 2
-    bool b_servo_lock;
+    bool b_servo_lock;  // 1 indicates servos are locked. This is a necessary condition for an edit to occur correctly.
+    bool b_tso_mode;    // Bit is 1 in tape speed override: in this mode, audio and video are still locked though speed is off play speed by +/- up to 15%.
     bool b_shuttle;
     bool b_jog;
     bool b_var;
     bool b_direction;  // clear if playback is forwarding〝set if playback is reversing
     bool b_still;      // set if playback is paused, or if in input preview mode
+    bool b_cue_up;
     // byte 3
     bool b_auto_mode;  // set if in Auto Mode
-    bool b_a_out_set;
-    bool b_a_in_set;
+    bool b_freeze_on;
+    bool b_cf_mode;
+    bool b_audio_out_set;
+    bool b_audio_in_set;
     bool b_out_set;
     bool b_in_set;
     // byte 4
     bool b_select_ee;  // set if in input preview mode
     bool b_full_ee;
+    bool b_edit;
+    bool b_review;
+    bool b_auto_edit;
+    bool b_preview;
+    bool b_preroll;
+    // byte 5
+    bool b_insert;
+    bool b_assemble;
+    bool b_video;
+    bool b_a4;
+    bool b_a3;
+    bool b_a2;
+    bool b_a1;
     // byte 6
     bool b_lamp_still;  // set according to playback speed and direction
     bool b_lamp_fwd;
     bool b_lamp_rev;
+    bool b_srch_led_8;
+    bool b_srch_led_4;
+    bool b_srch_led_2;
+    bool b_srch_led_1;
+    // byte 7
+    bool b_aud_split;
+    bool b_sync_act;
+    bool b_spot_erase;
+    bool b_in_out;
     // byte 8
+    bool b_buzzer;
+    bool b_lost_lock;
     bool b_near_eot;  // set if total space left on available SSDs is less than 3 minutes
     bool b_eot;       // set if total space left on available SSDs is less than 30 seconds
+    bool b_cf_lock;
+    bool b_svo_alarm;
+    bool b_sys_alarm;
+    bool b_rec_inhib;
+    // byte 9
+    bool b_fnc_abort;
 };
 
 // DATA-0
@@ -316,9 +352,9 @@ namespace SenseRequest {
         PREROLL_TIME_SENSE = 0x31,
         TIMER_MODE_SENSE = 0x36,
         RECORD_INHIBIT_SENSE = 0x3E,
-        DA_INP_EMPH_SENSE = 0x52,
-        DA_PB_EMPH_SENSE = 0x53,
-        DA_SAMP_FREQ_SENSE = 0x58,
+        DA_INPUT_EMPHASIS_SENSE = 0x52,
+        DA_PLAYBACK_EMPHASIS_SENSE = 0x53,
+        DA_SAMPLING_FREQUENCY_SENSE = 0x58,
         CROSS_FADE_TIME_SENSE = 0xAA,
     };
 }
@@ -326,24 +362,42 @@ namespace SenseRequest {
 // 7 - Sense Reply
 namespace SenseReturn {
     enum : uint8_t {
-        TIMER1_DATA = 0x00,
-        LTC_USER_BITS_TIME_DATA = 0x04,
-        VITCU_USER_BITS_TIME_DATA = 0x06,
-        VITC_TIME_DATA = 0x06,
-        USER_BITS_VITC_TIME_DATA = 0x07,
-        GEN_TC_DATA = 0x08,
-        GEN_TCUB_DATA = 0x08,
-        GEN_UB_DATA = 0x09,
+        TIMER_1 = 0x00,
+        TIMER_2 = 0x01,
+        LTC_TC_UB = 0x04,  // size == 8
+        LTC_TC = 0x04,     // size == 4
+        LTC_UB = 0x05,
+        VITC_TC_UB = 0x06,  // size == 8
+        VITC_TC = 0x06,     // size == 4
+        VITC_UB = 0x07,
+        GEN_TC_UB = 0x08,  // size == 8
+        GEN_TC = 0x08,     // size == 4
+        GEN_UB = 0x09,
         IN_DATA = 0x10,
         OUT_DATA = 0x11,
-        A_IN_DATA = 0x12,
-        A_OUT_DATA = 0x13,
-        CORRECTED_LTC_TIME_DATA = 0x14,
-        STATUS_DATA = 0x20,  // auto parse
-        SPEED_DATA = 0x2E,
-        PREROLL_TIME_DATA = 0x31,
-        TIMER_MODE_DATA = 0x36,
-        RECORD_INHIBIT_STATUS = 0x3E
+        AUDIO_IN_DATA = 0x12,
+        AUDIO_OUT_DATA = 0x13,
+        LTC_INTERPOLATED_TC_UB = 0x14,  // size == 8
+        LTC_INTERPOLATED_TC = 0x14,     // size == 4
+        LTC_INTERPOLATED_UB = 0x15,
+        HOLD_VITC_TC_UB = 0x16,  // size == 8
+        HOLD_VITC_TC = 0x16,     // size == 4
+        HOLD_VITC_UB = 0x17,
+        STATUS_DATA = 0x20,
+        EXTENDED_STATUS_DATA = 0x21,
+        SIGNAL_CONTROL_DATA = 0x23,
+        LOCAL_KEYMAP = 0x28,
+        HEAD_METER_DATA = 0x2A,
+        REMAINING_TIME = 0x2B,
+        CMD_SPEED_DATA = 0x2E,
+        EDIT_PRESET_STATUS = 0x30,
+        PREROLL_TIME = 0x31,
+        TIMER_MODE_STATUS = 0x36,
+        RECORD_INHIBIT_STATUS = 0x3E,
+        DA_INPUT_EMPHASIS_DATA = 0x52,
+        DA_PLAYBACK_EMPHASIS_DATA = 0x53,
+        DA_SAMPLING_FREQUENCY_DATA = 0x58,
+        CROSS_FADE_TIME_DATA = 0xAA,
     };
 }
 
@@ -388,37 +442,73 @@ namespace StatusMask {
     enum : uint8_t {
         // byte 0
         CASSETTE_OUT = 0b00100000,
+        SERVO_REF_MISSING = 0b00010000,
         LOCAL = 0b00000001,
         // byte 1
         STANDBY = 0b10000000,
         STOP = 0b00100000,
+        EJECT = 0b00010000,
         REWIND = 0b00001000,
         FORWARD = 0b00000100,
         RECORD = 0b00000010,
         PLAY = 0b00000001,
         // byte 2
         SERVO_LOCK = 0b10000000,
+        TSO_MODE = 0b01000000,
         SHUTTLE = 0b00100000,
         JOG = 0b00010000,
         VAR = 0b00001000,
         DIRECTION = 0b00000100,
         STILL = 0b00000010,
+        CUE_UP = 0b00000001,
         // byte 3
         AUTO_MODE = 0b10000000,
-        A_OUT_SET = 0b00001000,
-        A_IN_SET = 0b00000100,
+        FREEZE_ON = 0b01000000,
+        CF_MODE = 0b00010000,
+        AUDIO_OUT_SET = 0b00001000,
+        AUDIO_IN_SET = 0b00000100,
         OUT_SET = 0b00000010,
         IN_SET = 0b00000001,
         // byte 4
         SELECT_EE = 0b10000000,
         FULL_EE = 0b01000000,
+        EDIT_SET = 0b00010000,
+        REVIEW_SET = 0b00001000,
+        AUTO_EDIT_SET = 0b00000100,
+        PREVIEW_SET = 0b00000010,
+        PREROLL_SET = 0b00000001,
+        // byte 5
+        INSERT_SET = 0b01000000,
+        ASSEMBLE_SET = 0b00100000,
+        VIDEO_SET = 0b00010000,
+        A4_SET = 0b00001000,
+        A3_SET = 0b00000100,
+        A2_SET = 0b00000010,
+        A1_SET = 0b00000001,
         // byte 6
         LAMP_STILL = 0b01000000,
         LAMP_FWD = 0b00100000,
         LAMP_REV = 0b00010000,
+        SRCH_LED_8 = 0b00001000,
+        SRCH_LED_4 = 0b00000100,
+        SRCH_LED_2 = 0b00000010,
+        SRCH_LED_1 = 0b00000001,
+        // byte 7
+        AUD_SPLIT = 0b00100000,
+        SYNC_ACT = 0b00010000,
+        SPOT_ERASE = 0b00000100,
+        IN_OUT = 0b00000001,
         // byte 8
+        BUZZER = 0b10000000,
+        LOST_LOCK = 0b01000000,
         NEAR_EOT = 0b00100000,
-        EOT = 0b00010000
+        EOT = 0b00010000,
+        CF_LOCK = 0b00001000,
+        SVO_ALARM = 0b00000100,
+        SYS_ALARM = 0b00000010,
+        REC_INHIB = 0b00000001,
+        // byte 9
+        FNC_ABORT = 0b10000000,
     };
 }
 
@@ -465,6 +555,12 @@ namespace CurrentTimeSenseFlag {
         VITC_UB = 0x20,
     };
 }
+
+enum class TimerMode : uint8_t {
+    TIME_CODE,
+    CTL_COUNTER,
+    NA,
+};
 
 }  // namespace sony9pin
 

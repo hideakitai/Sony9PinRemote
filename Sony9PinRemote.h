@@ -1234,7 +1234,7 @@ public:
     // The device will return four bytes starting from the third byte,
     // i.e. DATA No.3 to DATA No.6 of the 74.20 STATUS DATA
     // REPLY: STATUS_DATA as above
-    void status_sense(const uint8_t start = 0, const uint8_t size = 9) {
+    void status_sense(const uint8_t start = 0, const uint8_t size = 10) {
         Serial.print(__func__);
         Serial.print(" : ");
         const uint8_t v = size | (start << 4);
@@ -1339,7 +1339,7 @@ public:
     void da_inp_emph_sense() {
         Serial.print(__func__);
         Serial.print(" : ");
-        send(Cmd1::SENSE_REQUEST, SenseRequest::DA_INP_EMPH_SENSE);
+        send(Cmd1::SENSE_REQUEST, SenseRequest::DA_INPUT_EMPHASIS_SENSE);
     }
 
     // DESCRIPTION:
@@ -1348,7 +1348,7 @@ public:
     void da_pb_emph_sense() {
         Serial.print(__func__);
         Serial.print(" : ");
-        send(Cmd1::SENSE_REQUEST, SenseRequest::DA_PB_EMPH_SENSE);
+        send(Cmd1::SENSE_REQUEST, SenseRequest::DA_PLAYBACK_EMPHASIS_SENSE);
     }
 
     // DESCRIPTION:
@@ -1357,7 +1357,7 @@ public:
     void da_samp_freq_sense() {
         Serial.print(__func__);
         Serial.print(" : ");
-        send(Cmd1::SENSE_REQUEST, SenseRequest::DA_SAMP_FREQ_SENSE);
+        send(Cmd1::SENSE_REQUEST, SenseRequest::DA_SAMPLING_FREQUENCY_SENSE);
     }
 
     // DESCRIPTION:
@@ -1472,8 +1472,8 @@ public:
     bool is_reverse() const { return res.sts.b_direction; }    // clear if playback is forwarding, set if playback is reversing
     bool is_paused() const { return res.sts.b_still; }         // set if playback is paused, or if in input preview mode
     bool is_auto_mode() const { return res.sts.b_auto_mode; }  // set if in Auto Mode
-    bool is_a_out_set() const { return res.sts.b_a_out_set; }
-    bool is_a_in_set() const { return res.sts.b_a_in_set; }
+    bool is_a_out_set() const { return res.sts.b_audio_out_set; }
+    bool is_a_in_set() const { return res.sts.b_audio_in_set; }
     bool is_out_set() const { return res.sts.b_out_set; }
     bool is_in_set() const { return res.sts.b_in_set; }
     bool is_select_ee() const { return res.sts.b_select_ee; }  // set if in input preview mode

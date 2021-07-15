@@ -72,8 +72,9 @@ void loop()
 ## Supported Commands
 
 - X : Supported
-- ? : Spec unknown
-- Other : Not supported
+- * : Supported Encoding Only
+- Others : Not Supported
+
 
 |   | Command (HEX)                   | Response (HEX)                     |
 |---|---------------------------------|------------------------------------|
@@ -106,8 +107,8 @@ void loop()
 | X | [20 41] Review                  | [10 01] Ack                        |
 | X | [20 42] Auto Edit               | [10 01] Ack                        |
 | X | [20 43] Outpoint Preview        | [10 01] Ack                        |
-| ? | [2X 54] Anti-Clog Timer Disable | [10 01] Ack                        |
-| ? | [2X 55] Anti-Clog Timer Enable  | [10 01] Ack                        |
+|   | [2X 54] Anti-Clog Timer Disable | [10 01] Ack                        | Command/Response Data format unknown
+|   | [2X 55] Anti-Clog Timer Enable  | [10 01] Ack                        | Command/Response Data format unknown
 | X | [2X 5C] DMC Set Forward         | [10 01] Ack                        |
 | X | [2X 5D] DMC Set Reverse         | [10 01] Ack                        |
 | X | [20 60] Full EE Off             | [10 01] Ack                        |
@@ -127,8 +128,8 @@ void loop()
 | X | [40 13] Audio Out Entry         | [10 01] Ack                        |
 | X | [44 14] In Data Preset          | [10 01] Ack                        |
 | X | [44 15] Out Data Preset         | [10 01] Ack                        |
-| ? | [4? 16] Audio In Data Preset    | [10 01] Ack                        |
-| ? | [4? 17] Audio Out Data Preset   | [10 01] Ack                        |
+|   | [4? 16] Audio In Data Preset    | [10 01] Ack                        | Command/Response Data format unknown
+|   | [4? 17] Audio Out Data Preset   | [10 01] Ack                        | Command/Response Data format unknown
 | X | [40 18] In + Shift              | [10 01] Ack                        |
 | X | [40 19] In - Shift              | [10 01] Ack                        |
 | X | [40 1A] Out + Shift             | [10 01] Ack                        |
@@ -156,71 +157,75 @@ void loop()
 | X | [41 37] Input Check             | [10 01] Ack                        |
 | X | [41 3A] Edit Field Select       | [10 01] Ack                        |
 | X | [41 3B] Freeze Mode Select      | [10 01] Ack                        |
-| ? | [4X 3E] Record Inhibit          | [10 01] Ack                        |
+|   | [4X 3E] Record Inhibit          | [10 01] Ack                        | Command/Response Data format unknown
 | X | [40 40] Auto Mode Off           | [10 01] Ack                        |
 | X | [40 41] Auto Mode On            | [10 01] Ack                        |
 | X | [40 42] Spot Erase Off          | [10 01] Ack                        |
 | X | [40 43] Spot Erase On           | [10 01] Ack                        |
 | X | [40 44] Audio Split Off         | [10 01] Ack                        |
 | X | [40 45] Audio Split On          | [10 01] Ack                        |
-| ? | [4X 98] Output H Phase          | [10 01] Ack                        |
-| ? | [4X 9B] Output Video Phase      | [10 01] Ack                        |
-| ? | [4X A0] Audio Input Level       | [10 01] Ack                        |
-| ? | [4X A1] Audio Output Level      | [10 01] Ack                        |
-| ? | [4X A2] Audio Adv Level         | [10 01] Ack                        |
-| ? | [4X A8] Audio Output Phase      | [10 01] Ack                        |
-| ? | [4X A9] Audio Adv Out Phase     | [10 01] Ack                        |
-| ? | [4X AA] Cross Fade Time Preset  | [10 01] Ack                        |
-| ? | [4X B8] Local Key Map           | [10 01] Ack                        |
+|   | [4X 98] Output H Phase          | [10 01] Ack                        | Command/Response Data format unknown
+|   | [4X 9B] Output Video Phase      | [10 01] Ack                        | Command/Response Data format unknown
+|   | [4X A0] Audio Input Level       | [10 01] Ack                        | Command/Response Data format unknown
+|   | [4X A1] Audio Output Level      | [10 01] Ack                        | Command/Response Data format unknown
+|   | [4X A2] Audio Adv Level         | [10 01] Ack                        | Command/Response Data format unknown
+|   | [4X A8] Audio Output Phase      | [10 01] Ack                        | Command/Response Data format unknown
+|   | [4X A9] Audio Adv Out Phase     | [10 01] Ack                        | Command/Response Data format unknown
+|   | [4X AA] Cross Fade Time Preset  | [10 01] Ack                        | Command/Response Data format unknown
+|   | [4X B8] Local Key Map           | [10 01] Ack                        | Command/Response Data format unknown
 | X | [42 F8] Still Off time          | [10 01] Ack                        |
 | X | [42 FA] Stby Off time           | [10 01] Ack                        |
 | X | [61 0A] TC Gen Sense            | Multiple responses as follows      |
-|   |                                 | [74 08] Gen Time Data              |
-|   |                                 | [74 09] Gen User Bits Data         |
-|   |                                 | [78 08] Gen Time and UB Data       |
+| X |                                 | [78 08] Gen Time and UB Data       |
+| X |                                 | [74 08] Gen Time Data              |
+| X |                                 | [74 09] Gen User Bits Data         |
 | X | [61 0C] Current Time Sense      | Multiple responses as follows      |
-|   |                                 | [74 00] Timer-1 (CTL Counter) Data |
-|   |                                 | [74 01] Timer-2 (CTL Counter) Data |
-|   |                                 | [74 04] LTC Time Data              |
-|   |                                 | [74 05] User Bits (LTC) Data       |
-|   |                                 | [74 06] VITC Time Data             |
-|   |                                 | [74 07] User Bits (VITC) Data      |
-|   |                                 | [74 14] Corrected LTC Time Data    |
-|   |                                 | [74 15] Hold User Bits (LTC) Data  |
-|   |                                 | [74 16] Hold VITC Time Data        |
-|   |                                 | [74 17] Hold User Bits (VITC) Data |
-| * | [60 10] In Data Sense           | [74 10] In Data                    |
-| * | [60 11] Out Data Sense          | [74 11] Out Data                   |
-| * | [60 12] Audio In Data Sense     | [74 12] Audio In Data              |
-| * | [60 13] Audio Out Data Sense    | [74 13] Audio Out Data             |
-| * | [61 20] Status Sense            | [7X 20] Status Data                |
-| * | [61 21] Extended VTR Status     | [7X 21] Extended Status Data       |
-| * | [62 23] Signal Control Sense    | [7X 23] Signal Control Data        |
-| ? | [6X 28] Local Key Map Sense     | [7X 28] Local Key Map              |
-| * | [61 2A] Head Meter Sense        | [7X 2A] Head Meter Data            |
-| * | [60 2B] Remaining Time Sense    | [76 2B] Remaining Time             |
-| * | [60 2E] Cmd Speed Sense         | [7X 2E] Cmd Speed Data             |
-| * | [61 30] Edit Preset Sense       | [7X 30] Edit Preset Status         |
-| * | [60 31] Preroll Time Sense      | [74 31] Preroll Time               |
-| * | [60 36] Timer Mode Sense        | [71 36] Timer Mode Status          |
-| * | [60 3E] Record Inhibit Sens     | [72 3E] Record Inhibit Status      |
-| * | [60 52] DA Inp Emph Sense       | [71 52] DA Input Emphasis Data     |
-| * | [60 53] DA PB Emph Sense        | [71 53] DA Playback Emphasis Data  |
-| * | [60 58] DA Samp. Freq. Sense    | [71 58] DA Sampling Frequency Data |
-| * | [61 AA] Cross Fade Time Sense   | [7X AA] Cross Fade Time Data       |
+| X |                                 | [74 00] Timer-1 (CTL Counter) Data |
+| X |                                 | [74 01] Timer-2 (CTL Counter) Data |
+| X |                                 | [74 04] LTC Time                   |
+| X |                                 | [78 04] LTC Time and UB Data       |
+| X |                                 | [74 05] LTC User Bits Data         |
+| X |                                 | [78 06] VITC Time + UB Data        |
+| X |                                 | [74 06] VITC Time                  |
+| X |                                 | [74 07] VITC User Bits Data        |
+| X |                                 | [78 14] LTC Interpolated Time + UB |
+| X |                                 | [74 14] LTC Interpolated Time      |
+| X |                                 | [74 15] LTC Interpolated UB Data   |
+| X |                                 | [78 16] Hold VITC Time + UB        |
+| X |                                 | [74 16] Hold VITC Time             |
+| X |                                 | [74 17] Hold VITC User Bits Data   |
+| X | [60 10] In Data Sense           | [74 10] In Data                    |
+| X | [60 11] Out Data Sense          | [74 11] Out Data                   |
+| * | [60 12] Audio In Data Sense     | [74 12] Audio In Data              | Response Data format unknown
+| * | [60 13] Audio Out Data Sense    | [74 13] Audio Out Data             | Response Data format unknown
+| X | [61 20] Status Sense            | [7X 20] Status Data                |
+| * | [61 21] Extended VTR Status     | [7X 21] Extended Status Data       | Response Data format unknown
+| * | [62 23] Signal Control Sense    | [7X 23] Signal Control Data        | Response Data format unknown
+|   | [6X 28] Local Key Map Sense     | [7X 28] Local Key Map              | Command/Response Data format unknown
+| * | [61 2A] Head Meter Sense        | [7X 2A] Head Meter Data            | Response Data format unknown
+| * | [60 2B] Remaining Time Sense    | [76 2B] Remaining Time             | Response Data format unknown
+| * | [60 2E] Cmd Speed Sense         | [7X 2E] Cmd Speed Data             | Response Data format unknown
+| * | [61 30] Edit Preset Sense       | [7X 30] Edit Preset Status         | Response Data format unknown
+| X | [60 31] Preroll Time Sense      | [74 31] Preroll Time               |
+| X | [60 36] Timer Mode Sense        | [71 36] Timer Mode Status          |
+| * | [60 3E] Record Inhibit Sens     | [72 3E] Record Inhibit Status      | Response Data format unknown
+| * | [60 52] DA Inp Emph Sense       | [71 52] DA Input Emphasis Data     | Response Data format unknown
+| * | [60 53] DA PB Emph Sense        | [71 53] DA Playback Emphasis Data  | Response Data format unknown
+| * | [60 58] DA Samp. Freq. Sense    | [71 58] DA Sampling Frequency Data | Response Data format unknown
+| * | [61 AA] Cross Fade Time Sense   | [7X AA] Cross Fade Time Data       | Response Data format unknown
 
 ### BlackMagic Advanced Media Protocol
 
-|   | Command (HEX)                   | Response (HEX)                     |
-|---|---------------------------------|------------------------------------|
+|   | Command (HEX)                    | Response (HEX)                     |
+|---|----------------------------------|------------------------------------|
 | X | [08 02] Bmd Seek To Timeline Pos | [10 01] Ack                        |
 | X | [20 29] Clear Playlist           | [10 01] Ack                        |
-| ? | [4F 16] Append Preset            | [10 01] Ack                        |
+|   | [4F 16] Append Preset            | [10 01] Ack                        | Data format unknown
 | X | [41 42] Set Playback Loop        | [10 01] Ack                        |
 | X | [41 44] Set Stop Mode            | [10 01] Ack                        |
 | X | [81 03] Bmd Seek Relative Clip   | [10 01] Ack                        |
 | X | [A1 01] Auto Skip                | [10 01] Ack                        |
-| ? | [AX 15] List Next ID             | [10 01] Ack                        |
+|   | [AX 15] List Next ID             | [10 01] Ack                        | Data format unknown
 
 ## APIs
 
