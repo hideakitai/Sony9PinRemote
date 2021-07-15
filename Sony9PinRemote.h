@@ -11,7 +11,7 @@
 #endif
 
 #include "Sony9PinRemote/Types.h"
-#include "Sony9PinRemote/Response.h"
+#include "Sony9PinRemote/Decoder.h"
 
 namespace sony9pin {
 
@@ -47,14 +47,23 @@ namespace util {
     }
 }  // namespace util
 
+class Encoder {
+};
+
 class Controller {
     // reference
     // https://en.wikipedia.org/wiki/9-Pin_Protocol
     // https://www.drastic.tv/support-59/legacysoftwarehardware/72-miscellaneous-legacy/158-vvcr-422-serial-protocol
 
     StreamType* stream;
-    Response res;
+    Decoder decoder;
     bool b_force_send {false};
+
+    // TODO: store here
+    uint16_t dev_type {0xFFFF};
+    Status sts;
+    Errors err;
+    size_t err_count {0};
 
 public:
     void attach(StreamType& s, const bool force_send = false) {
@@ -66,29 +75,74 @@ public:
     }
 
     void parse() {
-        while (stream->available())
-            res.feed(stream->read());
+        while (stream->available()) {
+            if (decoder.feed(stream->read())) {
+                // TODO: store status here
+                store_response();
+            }
+        }
     }
 
     bool parse_until(const uint32_t timeout_ms) {
         const uint32_t begin_ms = millis();
         while (true) {
             if (stream->available()) {
-                if (res.feed(stream->read()))
+                if (decoder.feed(stream->read())) {
+                    // TODO: store status here
+                    store_response();
                     return true;
+                }
             }
             if (millis() > begin_ms + timeout_ms)
                 return false;
         }
     }
 
-    bool ready() const { return b_force_send ? true : !res.busy(); }
+    void store_response() {
+        // store the data which is useful if it can be referred anytime we want
+        // TODO: size check???
+        switch (decoder.cmd1()) {
+            case Cmd1::SYSTEM_CONTROL: {
+                switch (decoder.cmd2()) {
+                    case SystemControlReturn::NAK: {
+                        err_count++;
+                        err = decoder.nak();
+                        break;
+                    }
+                    case SystemControlReturn::DEVICE_TYPE: {
+                        dev_type = decoder.device_type();
+                        break;
+                    }
+                    default: {
+                        Serial.println("[Error] Invalid System Control Command 2");
+                        break;
+                    }
+                }
+            }
+            case Cmd1::SENSE_RETURN: {
+                switch (decoder.cmd2()) {
+                    case SenseReturn::STATUS_DATA: {
+                        sts = decoder.status_sense();
+                        break;
+                    }
+                    default: {
+                        break;
+                    }
+                }
+            }
+            default: {
+                break;
+            }
+        }
+    }
+
+    bool ready() const { return b_force_send ? true : !decoder.busy(); }
     bool available() const { return available(); }
 
-    uint16_t device() const { return res.device_type(); }
-    const Status& status() const { return res.status(); }
-    const Errors& errors() const { return res.errors(); }
-    size_t error_count() const { return res.error_count(); }
+    uint16_t device_type() const { return dev_type; }
+    const Status& status() const { return sts; }
+    const Errors& errors() const { return err; }
+    size_t error_count() const { return err_count; }
 
     // 0 - System Control
 
@@ -1457,32 +1511,105 @@ public:
         Serial.println("NOT IMPLEMENTED");
     }
 
-    bool is_media_exist() const { return !res.sts.b_cassette_out; }  // set if no ssd is present
-    bool is_remote_enabled() const { return !res.sts.b_local; }      // set if remote is disabled (local control)
-    bool is_disk_available() const { return res.sts.b_standby; }     // set if a disk is available
-    bool is_stopping() const { return res.sts.b_stop; }
-    bool is_rewinding() const { return res.sts.b_rewind; }
-    bool is_forwarding() const { return res.sts.b_forward; }
-    bool is_recoding() const { return res.sts.b_record; }
-    bool is_playing() const { return res.sts.b_play; }
-    bool is_servo_lock() const { return res.sts.b_servo_lock; }
-    bool is_shuttle() const { return res.sts.b_shuttle; }
-    bool is_jog() const { return res.sts.b_jog; }
-    bool is_var() const { return res.sts.b_var; }
-    bool is_reverse() const { return res.sts.b_direction; }    // clear if playback is forwarding, set if playback is reversing
-    bool is_paused() const { return res.sts.b_still; }         // set if playback is paused, or if in input preview mode
-    bool is_auto_mode() const { return res.sts.b_auto_mode; }  // set if in Auto Mode
-    bool is_a_out_set() const { return res.sts.b_audio_out_set; }
-    bool is_a_in_set() const { return res.sts.b_audio_in_set; }
-    bool is_out_set() const { return res.sts.b_out_set; }
-    bool is_in_set() const { return res.sts.b_in_set; }
-    bool is_select_ee() const { return res.sts.b_select_ee; }  // set if in input preview mode
-    bool is_full_ee() const { return res.sts.b_full_ee; }
-    bool is_lamp_still() const { return res.sts.b_lamp_still; }  // set according to playback speed and direction
-    bool is_lamp_fwd() const { return res.sts.b_lamp_fwd; }
-    bool is_lamp_rev() const { return res.sts.b_lamp_rev; }
-    bool is_near_eot() const { return res.sts.b_near_eot; }  // set if total space left on available SSDs is less than 3 minutes
-    bool is_eot() const { return res.sts.b_eot; }            // set if total space left on available SSDs is less than 30 seconds
+    bool is_media_exist() const { return !sts.b_cassette_out; }  // set if no ssd is present
+    bool is_remote_enabled() const { return !sts.b_local; }      // set if remote is disabled (local control)
+    bool is_disk_available() const { return sts.b_standby; }     // set if a disk is available
+    bool is_stopping() const { return sts.b_stop; }
+    bool is_rewinding() const { return sts.b_rewind; }
+    bool is_forwarding() const { return sts.b_forward; }
+    bool is_recoding() const { return sts.b_record; }
+    bool is_playing() const { return sts.b_play; }
+    bool is_servo_lock() const { return sts.b_servo_lock; }
+    bool is_shuttle() const { return sts.b_shuttle; }
+    bool is_jog() const { return sts.b_jog; }
+    bool is_var() const { return sts.b_var; }
+    bool is_reverse() const { return sts.b_direction; }    // clear if playback is forwarding, set if playback is reversing
+    bool is_paused() const { return sts.b_still; }         // set if playback is paused, or if in input preview mode
+    bool is_auto_mode() const { return sts.b_auto_mode; }  // set if in Auto Mode
+    bool is_a_out_set() const { return sts.b_audio_out_set; }
+    bool is_a_in_set() const { return sts.b_audio_in_set; }
+    bool is_out_set() const { return sts.b_out_set; }
+    bool is_in_set() const { return sts.b_in_set; }
+    bool is_select_ee() const { return sts.b_select_ee; }  // set if in input preview mode
+    bool is_full_ee() const { return sts.b_full_ee; }
+    bool is_lamp_still() const { return sts.b_lamp_still; }  // set according to playback speed and direction
+    bool is_lamp_fwd() const { return sts.b_lamp_fwd; }
+    bool is_lamp_rev() const { return sts.b_lamp_rev; }
+    bool is_near_eot() const { return sts.b_near_eot; }  // set if total space left on available SSDs is less than 3 minutes
+    bool is_eot() const { return sts.b_eot; }            // set if total space left on available SSDs is less than 30 seconds
+
+    void print_nak() {
+        if (err.b_unknown_cmd) Serial.println("Unknown Command");
+        if (err.b_checksum_error) Serial.println("Checksum Error");
+        if (err.b_parity_error) Serial.println("Parity Error");
+        if (err.b_buffer_overrun) Serial.println("Buffer Overrun");
+        if (err.b_framing_error) Serial.println("Framing Error");
+        if (err.b_timeout) Serial.println("Timeout");
+    }
+
+    void print_status() {
+        Serial.println("<Remote Status>");
+        Serial.println("=================");
+        Serial.print("Cassette Out : ");
+        Serial.println(sts.b_cassette_out);
+        Serial.print("Local        : ");
+        Serial.println(sts.b_local);
+        Serial.println("-----------------");
+        Serial.print("Standby      : ");
+        Serial.println(sts.b_standby);
+        Serial.print("Stop         : ");
+        Serial.println(sts.b_stop);
+        Serial.print("Rewind       : ");
+        Serial.println(sts.b_rewind);
+        Serial.print("Forward      : ");
+        Serial.println(sts.b_forward);
+        Serial.print("Record       : ");
+        Serial.println(sts.b_record);
+        Serial.print("Play         : ");
+        Serial.println(sts.b_play);
+        Serial.println("-----------------");
+        Serial.print("Servo Lock   : ");
+        Serial.println(sts.b_servo_lock);
+        Serial.print("Shuttle      : ");
+        Serial.println(sts.b_shuttle);
+        Serial.print("Jog          : ");
+        Serial.println(sts.b_jog);
+        Serial.print("Var          : ");
+        Serial.println(sts.b_var);
+        Serial.print("Direction    : ");
+        Serial.println(sts.b_direction);
+        Serial.print("Still        : ");
+        Serial.println(sts.b_still);
+        Serial.println("-----------------");
+        Serial.print("Auto Mode    : ");
+        Serial.println(sts.b_auto_mode);
+        Serial.print("Aout Set     : ");
+        Serial.println(sts.b_audio_out_set);
+        Serial.print("Ain Set      : ");
+        Serial.println(sts.b_audio_in_set);
+        Serial.print("Out Set      : ");
+        Serial.println(sts.b_out_set);
+        Serial.print("In Set       : ");
+        Serial.println(sts.b_in_set);
+        Serial.println("-----------------");
+        Serial.print("Select EE    : ");
+        Serial.println(sts.b_select_ee);
+        Serial.print("Full EE      : ");
+        Serial.println(sts.b_full_ee);
+        Serial.println("-----------------");
+        Serial.print("Lamp Still   : ");
+        Serial.println(sts.b_lamp_still);
+        Serial.print("Lamp Fwd     : ");
+        Serial.println(sts.b_lamp_fwd);
+        Serial.print("Lamp Rev     : ");
+        Serial.println(sts.b_lamp_rev);
+        Serial.println("-----------------");
+        Serial.print("Near EOT     : ");
+        Serial.println(sts.b_near_eot);
+        Serial.print("EOT          : ");
+        Serial.println(sts.b_eot);
+        Serial.println("=================");
+    }
 
 private:
     void send(uint8_t& crc) {
@@ -1502,7 +1629,7 @@ private:
     template <typename Cmd2, typename... Args>
     void send(const Cmd1 cmd1, const Cmd2 cmd2, Args&&... args) {
         if (!ready()) return;
-        res.clear();
+        decoder.clear();
         uint8_t size = sizeof...(args);
         uint8_t header = (uint8_t)cmd1 | (size & 0x0F);
         uint8_t crc = header + (uint8_t)cmd2;

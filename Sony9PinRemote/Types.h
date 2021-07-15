@@ -13,7 +13,7 @@ namespace serial {
     static constexpr size_t CONFIG {SERIAL_8O1};
 }  // namespace serial
 
-// Data Structs for Response
+// Data Structs for Decoder
 
 struct Errors {
     bool b_unknown_cmd;

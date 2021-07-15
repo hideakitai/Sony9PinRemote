@@ -1,5 +1,6 @@
-#ifndef HT_RS422_SONY9PINREMOTE_RESPONSE_H
-#define HT_RS422_SONY9PINREMOTE_RESPONSE_H
+#pragma once
+#ifndef SONY9PINREMOTE_DECODER_H
+#define SONY9PINREMOTE_DECODER_H
 
 #ifdef ARDUINO
 #include <Arduino.h>
@@ -10,46 +11,60 @@
 
 namespace sony9pin {
 
-class Response {
-    // TODO: Do not have buffer inside of decoder
+struct TimeCode {
+    uint8_t frame;
+    uint8_t second;
+    uint8_t minute;
+    uint8_t hour;
+    bool is_cf;
+    bool is_df;
+};
+
+union UserBits {
+    uint8_t bytes[4];
+    uint32_t i;
+};
+
+struct TimeCodeAndUserBits {
+    TimeCode tc;
+    UserBits ub;
+};
+
+#define SONY9PIN_RESPONSE_CHECK(c1, c2, sz, ret)           \
+    if (!available()) {                                    \
+        Serial.println("[Error] No response available");   \
+        return ret;                                        \
+    }                                                      \
+    if (!(cmd1() == c1) || !(cmd2() == c2)) {              \
+        Serial.println("[Error] Packet type mismatch");    \
+        return ret;                                        \
+    }                                                      \
+    if (size() != sz) {                                    \
+        Serial.println("[Error] Packet size not correct"); \
+        return ret;                                        \
+    }
+
+class Decoder {
     static constexpr uint8_t MAX_RESPONSE_SIZE {15 + 3};
     uint8_t buffer[MAX_RESPONSE_SIZE];
-
     uint8_t next_size {0};
     uint8_t curr_size {0};
-    uint8_t b_parsing {false};  // TODO: maybe we don't need this
-
-    uint16_t device_no {0};
-    size_t err_count {0};
 
 public:
-    // TODO: make private
-    Status sts;
-    Errors err;
+    bool available() const {
+        return !empty() && (curr_size == next_size);
+    }
+
+    bool busy() const {
+        return !empty() && (curr_size < next_size);
+    }
 
     Cmd1 cmd1() const {
-        if (!available()) return Cmd1::NA;
-        return (Cmd1)(buffer[0] & (uint8_t)HeaderMask::CMD1);
-    }
-    uint8_t cmd2() const {
-        if (!available()) return 0xFF;
-        return buffer[1];
+        return available() ? (Cmd1)(buffer[0] & (uint8_t)HeaderMask::CMD1) : Cmd1::NA;
     }
 
-    bool available() const {
-        return !empty() && (curr_size == next_size) && !b_parsing;
-    }
-    bool busy() const {
-        return b_parsing;
-    }
-    const Status& status() const {
-        return sts;
-    }
-    const Errors& errors() const {
-        return err;
-    }
-    bool error_count() const {
-        return err_count;
+    uint8_t cmd2() const {
+        return available() ? buffer[1] : 0xFF;
     }
 
     uint8_t data(const uint8_t i) {
@@ -58,21 +73,20 @@ public:
     const uint8_t* data() const {
         return available() ? buffer + 2 : nullptr;
     }
+
     uint8_t size() const {
         return available() ? next_size - 3 : 0;
     }
 
     void clear() {
-        for (uint8_t i = 0; i < MAX_RESPONSE_SIZE; ++i) buffer[i] = 0;
+        memset(buffer, 0, MAX_RESPONSE_SIZE);
         next_size = 0;
         curr_size = 0;
-        b_parsing = false;
     }
 
     bool feed(const uint8_t d) {
         if (curr_size >= next_size) {  // next or unexpected response
             clear();
-            b_parsing = true;
         }
 
         if (next_size == 0) {  // header byte
@@ -96,8 +110,6 @@ public:
                     checksum += buffer[i];
 
                 if (d == checksum) {
-                    b_parsing = false;
-                    decode_response();
                     return true;
                 } else {
                     clear();
@@ -112,94 +124,7 @@ public:
         return false;
     }
 
-    void print_nak() {
-        Serial.print("NAK received ! err = ");
-        Serial.println(buffer[2], BIN);
-        if (err.b_unknown_cmd) Serial.println("Unknown Command");
-        if (err.b_checksum_error) Serial.println("Checksum Error");
-        if (err.b_parity_error) Serial.println("Parity Error");
-        if (err.b_buffer_overrun) Serial.println("Buffer Overrun");
-        if (err.b_framing_error) Serial.println("Framing Error");
-        if (err.b_timeout) Serial.println("Timeout");
-    }
-
-    void print_status() {
-        Serial.println("<Remote Status>");
-        Serial.println("=================");
-        Serial.print("Cassette Out : ");
-        Serial.println(sts.b_cassette_out);
-        Serial.print("Local        : ");
-        Serial.println(sts.b_local);
-        Serial.println("-----------------");
-        Serial.print("Standby      : ");
-        Serial.println(sts.b_standby);
-        Serial.print("Stop         : ");
-        Serial.println(sts.b_stop);
-        Serial.print("Rewind       : ");
-        Serial.println(sts.b_rewind);
-        Serial.print("Forward      : ");
-        Serial.println(sts.b_forward);
-        Serial.print("Record       : ");
-        Serial.println(sts.b_record);
-        Serial.print("Play         : ");
-        Serial.println(sts.b_play);
-        Serial.println("-----------------");
-        Serial.print("Servo Lock   : ");
-        Serial.println(sts.b_servo_lock);
-        Serial.print("Shuttle      : ");
-        Serial.println(sts.b_shuttle);
-        Serial.print("Jog          : ");
-        Serial.println(sts.b_jog);
-        Serial.print("Var          : ");
-        Serial.println(sts.b_var);
-        Serial.print("Direction    : ");
-        Serial.println(sts.b_direction);
-        Serial.print("Still        : ");
-        Serial.println(sts.b_still);
-        Serial.println("-----------------");
-        Serial.print("Auto Mode    : ");
-        Serial.println(sts.b_auto_mode);
-        Serial.print("Aout Set     : ");
-        Serial.println(sts.b_audio_out_set);
-        Serial.print("Ain Set      : ");
-        Serial.println(sts.b_audio_in_set);
-        Serial.print("Out Set      : ");
-        Serial.println(sts.b_out_set);
-        Serial.print("In Set       : ");
-        Serial.println(sts.b_in_set);
-        Serial.println("-----------------");
-        Serial.print("Select EE    : ");
-        Serial.println(sts.b_select_ee);
-        Serial.print("Full EE      : ");
-        Serial.println(sts.b_full_ee);
-        Serial.println("-----------------");
-        Serial.print("Lamp Still   : ");
-        Serial.println(sts.b_lamp_still);
-        Serial.print("Lamp Fwd     : ");
-        Serial.println(sts.b_lamp_fwd);
-        Serial.print("Lamp Rev     : ");
-        Serial.println(sts.b_lamp_rev);
-        Serial.println("-----------------");
-        Serial.print("Near EOT     : ");
-        Serial.println(sts.b_near_eot);
-        Serial.print("EOT          : ");
-        Serial.println(sts.b_eot);
-        Serial.println("=================");
-    }
-
-#define SONY9PIN_RESPONSE_CHECK(c1, c2, sz, ret)           \
-    if (!available()) {                                    \
-        Serial.println("[Error] No response available");   \
-        return ret;                                        \
-    }                                                      \
-    if (!(cmd1() == c1) || !(cmd2() == c2)) {              \
-        Serial.println("[Error] Packet type mismatch");    \
-        return ret;                                        \
-    }                                                      \
-    if (size() != sz) {                                    \
-        Serial.println("[Error] Packet size not correct"); \
-        return ret;                                        \
-    }
+    // =============== 1 - System Control Return ===============
 
     bool ack() const {
         SONY9PIN_RESPONSE_CHECK(Cmd1::SYSTEM_CONTROL_RETURN, SystemControlReturn::ACK, 0, false);
@@ -225,26 +150,11 @@ public:
         return dev_no;
     }
 
-    struct TimeCode {
-        uint8_t frame;
-        uint8_t second;
-        uint8_t minute;
-        uint8_t hour;
-        bool is_cf;
-        bool is_df;
-    };
-    union UserBits {
-        uint8_t bytes[4];
-        uint32_t i;
-    };
-    struct TimeCodeAndUserBits {
-        TimeCode tc;
-        UserBits ub;
-    };
+    // =============== 7 - Sense Return ===============
 
     // Responses to 61.0A TC Gen Sense
 
-    TimeCodeAndUserBits get_gen_tc_ub() {
+    TimeCodeAndUserBits gen_tc_ub() {
         TimeCodeAndUserBits tcub;
         SONY9PIN_RESPONSE_CHECK(Cmd1::SENSE_RETURN, SenseReturn::GEN_TC_UB, 8, tcub);
         decode_to_timecode(tcub.tc);
@@ -252,14 +162,14 @@ public:
         return tcub;
     }
 
-    TimeCode get_gen_tc() {
+    TimeCode gen_tc() {
         TimeCode tc;
         SONY9PIN_RESPONSE_CHECK(Cmd1::SENSE_RETURN, SenseReturn::GEN_TC, 4, tc);
         decode_to_timecode(tc);
         return tc;
     }
 
-    UserBits get_gen_ub() {
+    UserBits gen_ub() {
         UserBits ub;
         SONY9PIN_RESPONSE_CHECK(Cmd1::SENSE_RETURN, SenseReturn::GEN_UB, 4, ub);
         decode_to_userbits(ub);
@@ -268,21 +178,21 @@ public:
 
     // Responses to 61.0C Current Time Sense
 
-    TimeCode get_timer_1() {
+    TimeCode timer_1() {
         TimeCode tc;
         SONY9PIN_RESPONSE_CHECK(Cmd1::SENSE_RETURN, SenseReturn::TIMER_1, 4, tc);
         decode_to_timecode(tc);
         return tc;
     }
 
-    TimeCode get_timer_2() {
+    TimeCode timer_2() {
         TimeCode tc;
         SONY9PIN_RESPONSE_CHECK(Cmd1::SENSE_RETURN, SenseReturn::TIMER_2, 4, tc);
         decode_to_timecode(tc);
         return tc;
     }
 
-    TimeCodeAndUserBits get_ltc_tc_ub() {
+    TimeCodeAndUserBits ltc_tc_ub() {
         TimeCodeAndUserBits tcub;
         SONY9PIN_RESPONSE_CHECK(Cmd1::SENSE_RETURN, SenseReturn::LTC_TC_UB, 8, tcub);
         decode_to_timecode(tcub.tc);
@@ -290,21 +200,21 @@ public:
         return tcub;
     }
 
-    TimeCode get_ltc_tc() {
+    TimeCode ltc_tc() {
         TimeCode tc;
         SONY9PIN_RESPONSE_CHECK(Cmd1::SENSE_RETURN, SenseReturn::LTC_TC, 4, tc);
         decode_to_timecode(tc);
         return tc;
     }
 
-    UserBits get_ltc_ub() {
+    UserBits ltc_ub() {
         UserBits ub;
         SONY9PIN_RESPONSE_CHECK(Cmd1::SENSE_RETURN, SenseReturn::LTC_UB, 4, ub);
         decode_to_userbits(ub);
         return ub;
     }
 
-    TimeCodeAndUserBits get_vitc_tc_ub() {
+    TimeCodeAndUserBits vitc_tc_ub() {
         TimeCodeAndUserBits tcub;
         SONY9PIN_RESPONSE_CHECK(Cmd1::SENSE_RETURN, SenseReturn::VITC_TC_UB, 8, tcub);
         decode_to_timecode(tcub.tc);
@@ -312,21 +222,21 @@ public:
         return tcub;
     }
 
-    TimeCode get_vitc_tc() {
+    TimeCode vitc_tc() {
         TimeCode tc;
         SONY9PIN_RESPONSE_CHECK(Cmd1::SENSE_RETURN, SenseReturn::VITC_TC, 4, tc);
         decode_to_timecode(tc);
         return tc;
     }
 
-    UserBits get_vitc_ub() {
+    UserBits vitc_ub() {
         UserBits ub;
         SONY9PIN_RESPONSE_CHECK(Cmd1::SENSE_RETURN, SenseReturn::VITC_UB, 4, ub);
         decode_to_userbits(ub);
         return ub;
     }
 
-    TimeCodeAndUserBits get_ltc_interpolated_tc_ub() {
+    TimeCodeAndUserBits ltc_interpolated_tc_ub() {
         TimeCodeAndUserBits tcub;
         SONY9PIN_RESPONSE_CHECK(Cmd1::SENSE_RETURN, SenseReturn::LTC_INTERPOLATED_TC_UB, 8, tcub);
         decode_to_timecode(tcub.tc);
@@ -334,21 +244,21 @@ public:
         return tcub;
     }
 
-    TimeCode get_ltc_interpolated_tc() {
+    TimeCode ltc_interpolated_tc() {
         TimeCode tc;
         SONY9PIN_RESPONSE_CHECK(Cmd1::SENSE_RETURN, SenseReturn::LTC_INTERPOLATED_TC, 4, tc);
         decode_to_timecode(tc);
         return tc;
     }
 
-    UserBits get_ltc_interpolated_ub() {
+    UserBits ltc_interpolated_ub() {
         UserBits ub;
         SONY9PIN_RESPONSE_CHECK(Cmd1::SENSE_RETURN, SenseReturn::LTC_INTERPOLATED_UB, 4, ub);
         decode_to_userbits(ub);
         return ub;
     }
 
-    TimeCodeAndUserBits get_hold_vitc_tc_ub() {
+    TimeCodeAndUserBits hold_vitc_tc_ub() {
         TimeCodeAndUserBits tcub;
         SONY9PIN_RESPONSE_CHECK(Cmd1::SENSE_RETURN, SenseReturn::HOLD_VITC_TC_UB, 8, tcub);
         decode_to_timecode(tcub.tc);
@@ -356,14 +266,14 @@ public:
         return tcub;
     }
 
-    TimeCode get_hold_vitc_tc() {
+    TimeCode hold_vitc_tc() {
         TimeCode tc;
         SONY9PIN_RESPONSE_CHECK(Cmd1::SENSE_RETURN, SenseReturn::HOLD_VITC_TC, 4, tc);
         decode_to_timecode(tc);
         return tc;
     }
 
-    UserBits get_hold_vitc_ub() {
+    UserBits hold_vitc_ub() {
         UserBits ub;
         SONY9PIN_RESPONSE_CHECK(Cmd1::SENSE_RETURN, SenseReturn::HOLD_VITC_UB, 4, ub);
         decode_to_userbits(ub);
@@ -372,21 +282,21 @@ public:
 
     // Responses to other sense requests
 
-    TimeCode get_in_data() {
+    TimeCode in_data() {
         TimeCode tc;
         SONY9PIN_RESPONSE_CHECK(Cmd1::SENSE_RETURN, SenseReturn::IN_DATA, 4, tc);
         decode_to_timecode(tc);
         return tc;
     }
 
-    TimeCode get_out_data() {
+    TimeCode out_data() {
         TimeCode tc;
         SONY9PIN_RESPONSE_CHECK(Cmd1::SENSE_RETURN, SenseReturn::OUT_DATA, 4, tc);
         decode_to_timecode(tc);
         return tc;
     }
 
-    Status get_status(const uint8_t start = 0, const uint8_t sz = 10) {
+    Status status_sense(const uint8_t start = 0, const uint8_t sz = 10) {
         Status sts;
         SONY9PIN_RESPONSE_CHECK(Cmd1::SENSE_RETURN, SenseReturn::STATUS_DATA, sz, sts);
         for (uint8_t i = start; i < start + sz; ++i) {
@@ -487,18 +397,17 @@ public:
             }
         }
 
-        print_status();
         return sts;
     }
 
-    TimeCode get_preroll_time() {
+    TimeCode preroll_time() {
         TimeCode tc;
         SONY9PIN_RESPONSE_CHECK(Cmd1::SENSE_RETURN, SenseReturn::PREROLL_TIME, 4, tc);
         decode_to_timecode(tc);
         return tc;
     }
 
-    TimerMode get_timer_mode() {
+    TimerMode timer_mode() {
         TimerMode tm = TimerMode::NA;
         SONY9PIN_RESPONSE_CHECK(Cmd1::SENSE_RETURN, SenseReturn::TIMER_MODE_STATUS, 1, tm);
         switch (buffer[2]) {
@@ -514,73 +423,6 @@ private:
         return curr_size == 0;
     }
 
-    // bool has_system_control_return() const {
-    //     if (!available()) return false;
-    //     return cmd1() == Cmd1::SYSTEM_CONTROL_RETURN;
-    // }
-
-    // bool has_sense_return() const {
-    //     if (!available()) return false;
-    //     return cmd1() == Cmd1::SENSE_RETURN;
-    // }
-
-    // bool has_ack() const {
-    //     if (!available()) return false;
-    //     return has_system_control_return() && (cmd2() == SystemControlReturn::ACK);
-    // }
-    // bool has_nak() const {
-    //     if (!available()) return false;
-    //     return has_system_control_return() && (cmd2() == SystemControlReturn::NAK);
-    // }
-    // bool has_device_type() const {
-    //     if (!available()) return false;
-    //     return has_system_control_return() && (cmd2() == SystemControlReturn::DEVICE_TYPE);
-    // }
-
-    // bool has_status() const {
-    //     if (!available()) return false;
-    //     return has_sense_return() && (cmd2() == SenseReturn::STATUS_DATA);
-    // }
-
-    void decode_response() {
-        // store the data which is useful if it can be referred anytime we want
-        // TODO: size check???
-        switch (cmd1()) {
-            case Cmd1::SYSTEM_CONTROL: {
-                switch (cmd2()) {
-                    case SystemControlReturn::NAK: {
-                        err_count++;
-                        err = nak();
-                        print_nak();
-                        break;
-                    }
-                    case SystemControlReturn::DEVICE_TYPE: {
-                        device_no = device_type();
-                        break;
-                    }
-                    default: {
-                        Serial.println("[Error] Invalid System Control Command 2");
-                        break;
-                    }
-                }
-            }
-            case Cmd1::SENSE_RETURN: {
-                switch (cmd2()) {
-                    case SenseReturn::STATUS_DATA: {
-                        sts = get_status();
-                        break;
-                    }
-                    default: {
-                        break;
-                    }
-                }
-            }
-            default: {
-                break;
-            }
-        }
-    }
-
     void decode_to_timecode(TimeCode& tc) {
         tc.is_cf = buffer[2] & 0b10000000;
         tc.is_df = buffer[2] & 0b01000000;
@@ -594,8 +436,8 @@ private:
         for (size_t i = 0; i < 4; ++i)
             ub.bytes[i] = buffer[2 + offset + i];
     }
-
-};  // namespace sony9pin
+};
 
 }  // namespace sony9pin
-#endif  // HT_RS422_SONY9PINREMOTE_RESPONSE_H
+
+#endif  // SONY9PINREMOTE_DECODER_H
