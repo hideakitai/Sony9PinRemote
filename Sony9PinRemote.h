@@ -11,6 +11,7 @@
 #endif
 
 #include "Sony9PinRemote/Types.h"
+#include "Sony9PinRemote/Encoder.h"
 #include "Sony9PinRemote/Decoder.h"
 
 namespace sony9pin {
@@ -18,37 +19,23 @@ namespace sony9pin {
 #ifdef SONY9PINREMOTE_ENABLE_STREAM
 #ifdef ARDUINO
 using StreamType = Stream;
-#define SONY9PINREMOTE_STREAM_WRITE(data) stream->write(data)
+#define SONY9PINREMOTE_STREAM_WRITE(data, size) \
+    if (size > 0) stream->write(data, size)
 #define SONY9PINREMOTE_STREAM_READ stream->read
 #elif defined(OF_VERSION_MAJOR)
 using StreamType = ofSerial;
-#define SONY9PINREMOTE_STREAM_WRITE(data) stream->writeByte(data)
+#define SONY9PINREMOTE_STREAM_WRITE(data, size) \
+    if (size > 0) stream->writeBytes(data, size)
 #define SONY9PINREMOTE_STREAM_READ stream->readByte
 #endif
 #else
 #error THIS PLATFORM IS NOT SUPPORTED
 #endif  // SONY9PINREMOTE_ENABLE_STREAM
 
-namespace util {
-    template <class T>
-    struct remove_reference { using type = T; };
-    template <class T>
-    struct remove_reference<T&> { using type = T; };
-    template <class T>
-    struct remove_reference<T&&> { using type = T; };
-
-    template <class T>
-    constexpr T&& forward(typename remove_reference<T>::type& t) noexcept {
-        return static_cast<T&&>(t);
-    }
-    template <class T>
-    constexpr T&& forward(typename remove_reference<T>::type&& t) noexcept {
-        return static_cast<T&&>(t);
-    }
-}  // namespace util
-
-class Encoder {
-};
+namespace serial {
+    static constexpr size_t BAUDRATE {38400};
+    static constexpr size_t CONFIG {SERIAL_8O1};
+}  // namespace serial
 
 class Controller {
     // reference
@@ -56,14 +43,15 @@ class Controller {
     // https://www.drastic.tv/support-59/legacysoftwarehardware/72-miscellaneous-legacy/158-vvcr-422-serial-protocol
 
     StreamType* stream;
+    Encoder encoder;
     Decoder decoder;
-    bool b_force_send {false};
 
-    // TODO: store here
     uint16_t dev_type {0xFFFF};
     Status sts;
     Errors err;
     size_t err_count {0};
+
+    bool b_force_send {false};
 
 public:
     void attach(StreamType& s, const bool force_send = false) {
@@ -74,65 +62,57 @@ public:
             stream->read();
     }
 
-    void parse() {
+    bool parse() {
         while (stream->available()) {
             if (decoder.feed(stream->read())) {
-                // TODO: store status here
-                store_response();
+                // store the data which is useful if it can be referred anytime we want
+                // TODO: size check???
+                switch (decoder.cmd1()) {
+                    case Cmd1::SYSTEM_CONTROL: {
+                        switch (decoder.cmd2()) {
+                            case SystemControlReturn::NAK: {
+                                err_count++;
+                                err = decoder.nak();
+                                break;
+                            }
+                            case SystemControlReturn::DEVICE_TYPE: {
+                                dev_type = decoder.device_type();
+                                break;
+                            }
+                            default: {
+                                Serial.println("[Error] Invalid System Control Command 2");
+                                break;
+                            }
+                        }
+                    }
+                    case Cmd1::SENSE_RETURN: {
+                        switch (decoder.cmd2()) {
+                            case SenseReturn::STATUS_DATA: {
+                                sts = decoder.status_sense();
+                                break;
+                            }
+                            default: {
+                                break;
+                            }
+                        }
+                    }
+                    default: {
+                        break;
+                    }
+                }
+                return true;
             }
         }
+        return false;
     }
 
     bool parse_until(const uint32_t timeout_ms) {
         const uint32_t begin_ms = millis();
         while (true) {
-            if (stream->available()) {
-                if (decoder.feed(stream->read())) {
-                    // TODO: store status here
-                    store_response();
-                    return true;
-                }
-            }
+            if (parse())
+                return true;
             if (millis() > begin_ms + timeout_ms)
                 return false;
-        }
-    }
-
-    void store_response() {
-        // store the data which is useful if it can be referred anytime we want
-        // TODO: size check???
-        switch (decoder.cmd1()) {
-            case Cmd1::SYSTEM_CONTROL: {
-                switch (decoder.cmd2()) {
-                    case SystemControlReturn::NAK: {
-                        err_count++;
-                        err = decoder.nak();
-                        break;
-                    }
-                    case SystemControlReturn::DEVICE_TYPE: {
-                        dev_type = decoder.device_type();
-                        break;
-                    }
-                    default: {
-                        Serial.println("[Error] Invalid System Control Command 2");
-                        break;
-                    }
-                }
-            }
-            case Cmd1::SENSE_RETURN: {
-                switch (decoder.cmd2()) {
-                    case SenseReturn::STATUS_DATA: {
-                        sts = decoder.status_sense();
-                        break;
-                    }
-                    default: {
-                        break;
-                    }
-                }
-            }
-            default: {
-                break;
-            }
         }
     }
 
@@ -144,7 +124,7 @@ public:
     const Errors& errors() const { return err; }
     size_t error_count() const { return err_count; }
 
-    // 0 - System Control
+    // =============== 0 - System Control ===============
 
     // DESCRIPTION:
     // When receiving this command, all local operational functions of the device will be disabled.
@@ -152,9 +132,8 @@ public:
     // REPLY: ACK
     // HyperDeck NOTE: NOT SUPPORTED
     void local_disable() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::SYSTEM_CONTROL, SystemCtrl::LOCAL_DISABLE);
+        auto packet = encoder.local_disable();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
@@ -162,9 +141,8 @@ public:
     // DEVICE TYPE return with 2 bytes data will be returned:
     // REPLY: SystemControlReturn::DEVICE_TYPE
     void device_type_request() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::SYSTEM_CONTROL, SystemCtrl::DEVICE_TYPE);
+        auto packet = encoder.device_type_request();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
@@ -173,39 +151,35 @@ public:
     // REPLY: ACK
     // HyperDeck NOTE: NOT SUPPORTED
     void local_enable() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::SYSTEM_CONTROL, SystemCtrl::LOCAL_ENABLE);
+        auto packet = encoder.local_enable();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
-    // 2 - Transport Control
+    // =============== 2 - Transport Control ===============
 
     // DESCRIPTION:
     // Stop the device and pass the device's input to the device's output.
     // Cease all processing of the current material.
     // REPLY: ACK
     void stop() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::TRANSPORT_CONTROL, TransportCtrl::STOP);
+        auto packet = encoder.stop();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // Plays from the current position at normal play speed for the material.
     // REPLY: ACK
     void play() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::TRANSPORT_CONTROL, TransportCtrl::PLAY);
+        auto packet = encoder.play();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // Records from the current position at normal play speed.
     // REPLY: ACK
     void record() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::TRANSPORT_CONTROL, TransportCtrl::RECORD);
+        auto packet = encoder.record();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
@@ -214,9 +188,8 @@ public:
     // REPLY: ACK
     // HyperDeck NOTE: NOT SUPPORTED
     void standby_off() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::TRANSPORT_CONTROL, TransportCtrl::STANDBY_OFF);
+        auto packet = encoder.standby_off();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
@@ -225,9 +198,8 @@ public:
     // REPLY: ACK
     // HyperDeck NOTE: NOT SUPPORTED
     void standby_on() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::TRANSPORT_CONTROL, TransportCtrl::STANDBY_ON);
+        auto packet = encoder.standby_on();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
@@ -235,9 +207,8 @@ public:
     // REPLY: ACK
     // HyperDeck NOTE: NOT SUPPORTED
     void eject() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::TRANSPORT_CONTROL, TransportCtrl::EJECT);
+        auto packet = encoder.eject();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
@@ -246,9 +217,8 @@ public:
     // REPLY: ACK
     // HyperDeck NOTE: x2 faster
     void fast_forward() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::TRANSPORT_CONTROL, TransportCtrl::FAST_FWD);
+        auto packet = encoder.fast_forward();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // NOTE: For the commands that follow
@@ -279,9 +249,8 @@ public:
     // usually with varying speeds sent by the FORWARD controller for fine positioning.
     // REPLY: ACK
     void jog_forward(const uint8_t data1, const uint8_t data2 = 0) {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::TRANSPORT_CONTROL, TransportCtrl::JOG_FWD, data1, data2);
+        auto packet = encoder.jog_forward(data1, data2);
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
@@ -289,9 +258,8 @@ public:
     // This 'smoothing' process may slightly vary the requested speed.
     // REPLY: ACK
     void var_forward(const uint8_t data1, const uint8_t data2 = 0) {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::TRANSPORT_CONTROL, TransportCtrl::VAR_FWD, data1, data2);
+        auto packet = encoder.var_forward(data1, data2);
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
@@ -299,18 +267,16 @@ public:
     // Usually used for visual searching.
     // REPLY: ACK
     void shuttle_forward(const uint8_t data1, const uint8_t data2 = 0) {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::TRANSPORT_CONTROL, TransportCtrl::SHUTTLE_FWD, data1, data2);
+        auto packet = encoder.shuttle_forward(data1, data2);
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // Move the device's material one frame (actual or logical depending on the FORWARD media) forward and pause.
     // REPLY: ACK
     void frame_step_forward() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::TRANSPORT_CONTROL, TransportCtrl::FRAME_STEP_FWD);
+        auto packet = encoder.frame_step_forward();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
@@ -319,9 +285,8 @@ public:
     // REPLY: ACK
     // HyperDeck NOTE: same as rewind()
     void fast_reverse() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::TRANSPORT_CONTROL, TransportCtrl::FAST_REVERSE);
+        auto packet = encoder.fast_reverse();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
@@ -330,9 +295,8 @@ public:
     // REPLY: ACK
     // HyperDeck NOTE: x2 faster
     void rewind() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::TRANSPORT_CONTROL, TransportCtrl::REWIND);
+        auto packet = encoder.rewind();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
@@ -340,9 +304,8 @@ public:
     // usually with varying speeds sent by the REVERSE controller, for fine positioning.
     // REPLY: ACK
     void jog_reverse(const uint8_t data1, const uint8_t data2 = 0) {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::TRANSPORT_CONTROL, TransportCtrl::JOG_REV, data1, data2);
+        auto packet = encoder.jog_reverse(data1, data2);
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
@@ -350,9 +313,8 @@ public:
     // This 'smoothing' process may vary the speed slightly from the requested speed.
     // REPLY: ACK
     void var_reverse(const uint8_t data1, const uint8_t data2 = 0) {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::TRANSPORT_CONTROL, TransportCtrl::VAR_REV, data1, data2);
+        auto packet = encoder.var_reverse(data1, data2);
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
@@ -360,18 +322,16 @@ public:
     // Usually used for visual searching.
     // REPLY: ACK
     void shuttle_reverse(const uint8_t data1, const uint8_t data2 = 0) {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::TRANSPORT_CONTROL, TransportCtrl::SHUTTLE_REV, data1, data2);
+        auto packet = encoder.shuttle_reverse(data1, data2);
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // Move the device's material one frame (actual or logical depending on the REVERSE media) backward and pause.
     // REPLY: ACK
     void frame_step_reverse() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::TRANSPORT_CONTROL, TransportCtrl::FRAME_STEP_REV);
+        auto packet = encoder.frame_step_reverse();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
@@ -379,9 +339,8 @@ public:
     // minus the length of the current pre-roll (PRE-ROLL TIME PRESET).
     // REPLY: ACK
     void preroll() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::TRANSPORT_CONTROL, TransportCtrl::PREROLL);
+        auto packet = encoder.preroll();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
@@ -394,36 +353,32 @@ public:
     // Send: 24 31 24 36 52 21 F1 (Cue to 21 hours, 52 minutes, 36 seconds, 24 frames)
     // REPLY: ACK
     void cue_up_with_data(const uint8_t hours, const uint8_t minutes, const uint8_t seconds, const uint8_t frames) {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::TRANSPORT_CONTROL, TransportCtrl::CUE_UP_WITH_DATA, frames, seconds, minutes, hours);
+        auto packet = encoder.cue_up_with_data(hours, minutes, seconds, frames);
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // UNKNOWN
     // REPLY: ACK
     void sync_play() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::TRANSPORT_CONTROL, TransportCtrl::SYNC_PLAY);
+        auto packet = encoder.sync_play();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // UNKNOWN
     // REPLY: ACK
     void prog_speed_play_plus(const uint8_t v) {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::TRANSPORT_CONTROL, TransportCtrl::PROG_SPEED_PLAY_PLUS, v);
+        auto packet = encoder.prog_speed_play_plus(v);
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // UNKNOWN
     // REPLY: ACK
     void prog_speed_play_minus(const uint8_t v) {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::TRANSPORT_CONTROL, TransportCtrl::PROG_SPEED_PLAY_MINUS, v);
+        auto packet = encoder.prog_speed_play_minus(v);
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
@@ -433,9 +388,8 @@ public:
     // (assuming a two second post-roll) after the out point.
     // REPLY: ACK
     void preview() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::TRANSPORT_CONTROL, TransportCtrl::PREVIEW);
+        auto packet = encoder.preview();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
@@ -445,67 +399,58 @@ public:
     // (assuming a two second post-roll) after the last out point.
     // REPLY: ACK
     void review() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::TRANSPORT_CONTROL, TransportCtrl::REVIEW);
+        auto packet = encoder.review();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // UNKNOWN
     // REPLY: ACK
     void auto_edit() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::TRANSPORT_CONTROL, TransportCtrl::AUTO_EDIT);
+        auto packet = encoder.auto_edit();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // UNKNOWN
     // REPLY: ACK
     void outpoint_preview() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::TRANSPORT_CONTROL, TransportCtrl::OUTPOINT_PREVIEW);
+        auto packet = encoder.outpoint_preview();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // UNKNOWN
     // REPLY: ACK
     void anti_clog_timer_disable() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        // send(Cmd1::TRANSPORT_CONTROL, TransportCtrl::ANTI_CLOG_TIMER_DISABLE);
         // TODO: NOT IMPLEMENTED
-        Serial.println("NOT IMPLEMENTED");
+        auto packet = encoder.anti_clog_timer_disable();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // UNKNOWN
     // REPLY: ACK
     void anti_clog_timer_enable() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        // send(Cmd1::TRANSPORT_CONTROL, TransportCtrl::ANTI_CLOG_TIMER_ENABLE);
         // TODO: NOT IMPLEMENTED
-        Serial.println("NOT IMPLEMENTED");
+        auto packet = encoder.anti_clog_timer_enable();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // UNKNOWN
     // REPLY: ACK
     void dmc_set_fwd(const uint8_t data1, const uint8_t data2) {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::TRANSPORT_CONTROL, TransportCtrl::DMC_SET_FWD, data1, data2);
+        auto packet = encoder.dmc_set_fwd(data1, data2);
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // UNKNOWN
     // REPLY: ACK
     void dmc_set_rev(const uint8_t data1, const uint8_t data2) {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::TRANSPORT_CONTROL, TransportCtrl::DMC_SET_REV, data1, data2);
+        auto packet = encoder.dmc_set_rev(data1, data2);
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
@@ -514,9 +459,8 @@ public:
     // unless the device is in an idle state.
     // REPLY: ACK
     void full_ee_off() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::TRANSPORT_CONTROL, TransportCtrl::FULL_EE_OFF);
+        auto packet = encoder.full_ee_off();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
@@ -524,9 +468,8 @@ public:
     // This device has no effect on the current EDIT PRESET but it does set all channels to the device's inputs.
     // REPLY: ACK
     void full_ee_on() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::TRANSPORT_CONTROL, TransportCtrl::FULL_EE_ON);
+        auto packet = encoder.full_ee_on();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
@@ -535,48 +478,43 @@ public:
     // To clear the SELECTED EE mode, use the EE OFF or the EDIT OFF command.
     // REPLY: ACK
     void select_ee_on() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::TRANSPORT_CONTROL, TransportCtrl::SELECT_EE_ON);
+        auto packet = encoder.select_ee_on();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // UNKNOWN
     // REPLY: ACK
     void edit_off() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::TRANSPORT_CONTROL, TransportCtrl::EDIT_OFF);
+        auto packet = encoder.edit_off();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // UNKNOWN
     // REPLY: ACK
     void edit_on() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::TRANSPORT_CONTROL, TransportCtrl::EDIT_ON);
+        auto packet = encoder.edit_on();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // UNKNOWN
     // REPLY: ACK
     void freeze_off() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::TRANSPORT_CONTROL, TransportCtrl::FREEZE_OFF);
+        auto packet = encoder.freeze_off();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // UNKNOWN
     // REPLY: ACK
     void freeze_on() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::TRANSPORT_CONTROL, TransportCtrl::FREEZE_ON);
+        auto packet = encoder.freeze_on();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
-    // 4 - Preset/Select Control
+    // =============== 4 - Preset/Select Control ===============
 
     // DESCRIPTION:
     // This command presets the device's control (CTL) counter to the value which has been given by
@@ -587,11 +525,10 @@ public:
     // Send: 44 00 00 10 20 01 75 (CTL counter set to 1 hour, 20 minutes, 10 seconds, 0 frames)
     // REPLY: ACK
     void timer_1_preset(const uint8_t hours, const uint8_t minutes, const uint8_t seconds, const uint8_t frames) {
-        Serial.print(__func__);
-        Serial.print(" : ");
         // TODO: need to convert to BCD(Binary Coded Decimal)?
         // TODO: Drop or Non-Drop
-        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::TIMER_1_PRESET, frames, seconds, minutes, hours);
+        auto packet = encoder.timer_1_preset(hours, minutes, seconds, frames);
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
@@ -604,11 +541,10 @@ public:
     // Send: 44 04 00 15 30 00 75 (Preset TC set to 30 minutes, 15 seconds, 0 frames)
     // REPLY: ACK
     void time_code_preset(const uint8_t hours, const uint8_t minutes, const uint8_t seconds, const uint8_t frames) {
-        Serial.print(__func__);
-        Serial.print(" : ");
         // TODO: need to convert to BCD(Binary Coded Decimal)?
         // TODO: Drop or Non-Drop
-        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::TIME_CODE_PRESET, frames, seconds, minutes, hours);
+        auto packet = encoder.time_code_preset(hours, minutes, seconds, frames);
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
@@ -617,59 +553,51 @@ public:
     // Send: 44 05 60 63 44 45 95 (Set UB to 06364454)
     // REPLY: ACK
     void user_bit_preset(const uint8_t data1, const uint8_t data2, const uint8_t data3, const uint8_t data4) {
-        Serial.print(__func__);
-        Serial.print(" : ");
         // TODO: more user-friendly arguments?
-        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::USER_BIT_PRESET, data1, data2, data3, data4);
+        auto packet = encoder.user_bit_preset(data1, data2, data3, data4);
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // Resets the control (CTL) counter to zero.
     // REPLY: ACK
     void timer_1_reset() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::TIMER_1_RESET);
+        auto packet = encoder.timer_1_reset();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // Store the current position of the device as the in point for the next edit.
     // REPLY: ACK
     void in_entry() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::IN_ENTRY);
+        auto packet = encoder.in_entry();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // Store the current position of the device as the out point for the next edit.
     // REPLY: ACK
     void out_entry() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::OUT_ENTRY);
+        auto packet = encoder.out_entry();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // UNKNOWN
     // REPLY: ACK
     void audio_in_entry() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        // send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::AUDIO_IN_ENTRY);
         // TODO: NOT IMPLEMENTED
-        Serial.println("NOT IMPLEMENTED");
+        auto packet = encoder.audio_in_entry();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // UNKNOWN
     // REPLY: ACK
     void audio_out_entry() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        // send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::AUDIO_OUT_ENTRY);
         // TODO: NOT IMPLEMENTED
-        Serial.println("NOT IMPLEMENTED");
+        auto packet = encoder.audio_out_entry();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
@@ -678,10 +606,9 @@ public:
     // Send: 44 14 21 16 25 04 68 (Set in point to 4 hours, 25 minutes, 16 seconds, 21 frames)
     // REPLY: ACK
     void in_data_preset(const uint8_t hours, const uint8_t minutes, const uint8_t seconds, const uint8_t frames) {
-        Serial.print(__func__);
-        Serial.print(" : ");
         // TODO: need to convert to BCD(Binary Coded Decimal)?
-        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::IN_DATA_PRESET, frames, seconds, minutes, hours);
+        auto packet = encoder.in_data_preset(hours, minutes, seconds, frames);
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
@@ -690,136 +617,123 @@ public:
     // Send: 44 15 05 09 27 04 92 (Set out point to 4 hours, 27 minutes, 9 seconds, 5 frames)
     // REPLY: ACK
     void out_data_preset(const uint8_t hours, const uint8_t minutes, const uint8_t seconds, const uint8_t frames) {
-        Serial.print(__func__);
-        Serial.print(" : ");
         // TODO: need to convert to BCD(Binary Coded Decimal)?
-        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::OUT_DATA_PRESET, frames, seconds, minutes, hours);
+        auto packet = encoder.out_data_preset(hours, minutes, seconds, frames);
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // UNKNOWN
     // REPLY: ACK
     void audio_in_data_preset() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::AUDIO_IN_DATA_PRESET);
+        // TODO: NOT IMPLEMENTED
+        auto packet = encoder.audio_in_data_preset();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // UNKNOWN
     // REPLY: ACK
     void audio_out_data_preset() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::AUDIO_OUT_DATA_PRESET);
+        // TODO: NOT IMPLEMENTED
+        auto packet = encoder.audio_out_data_preset();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // Adds one frame to the current in point time code value.
     // REPLY: ACK
     void in_shift_plus() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::IN_SHIFT_PLUS);
+        auto packet = encoder.in_shift_plus();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // Subtracts one frame from the current in point time code value.
     // REPLY: ACK
     void in_shift_minus() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::IN_SHIFT_MINUS);
+        auto packet = encoder.in_shift_minus();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // Adds one frame to the current out point time code value.
     // REPLY: ACK
     void out_shift_plus() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::OUT_SHIFT_PLUS);
+        auto packet = encoder.out_shift_plus();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // Subtracts one frame from the current out point time code value.
     // REPLY: ACK
     void out_shift_minus() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::OUT_SHIFT_MINUS);
+        auto packet = encoder.out_shift_minus();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // UNKNOWN
     // REPLY: ACK
     void audio_in_shift_plus() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::AUDIO_IN_SHIFT_PLUS);
+        auto packet = encoder.audio_in_shift_plus();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // UNKNOWN
     // REPLY: ACK
     void audio_in_shift_minus() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::AUDIO_IN_SHIFT_MINUS);
+        auto packet = encoder.audio_in_shift_minus();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // UNKNOWN
     // REPLY: ACK
     void audio_out_shift_plus() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::AUDIO_OUT_SHIFT_PLUS);
+        auto packet = encoder.audio_out_shift_plus();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // UNKNOWN
     // REPLY: ACK
     void audio_out_shift_minus() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::AUDIO_OUT_SHIFT_MINUS);
+        auto packet = encoder.audio_out_shift_minus();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // Reset the value of the in point to zero.
     // REPLY: ACK
     void in_flag_reset() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::IN_FLAG_RESET);
+        auto packet = encoder.in_flag_reset();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // Reset the value of the out point to zero.
     // REPLY: ACK
     void out_flag_reset() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::OUT_FLAG_RESET);
+        auto packet = encoder.out_flag_reset();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // UNKNOWN
     // REPLY: ACK
     void audio_in_flag_reset() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::AUDIO_IN_FLAG_RESET);
+        auto packet = encoder.audio_in_flag_reset();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // UNKNOWN
     // REPLY: ACK
     void audio_out_flag_reset() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::AUDIO_OUT_FLAG_RESET);
+        auto packet = encoder.audio_out_flag_reset();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
@@ -828,9 +742,8 @@ public:
     // IN RECALL command.
     // REPLY: ACK
     void in_recall() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::IN_RECALL);
+        auto packet = encoder.in_recall();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
@@ -839,36 +752,32 @@ public:
     // by the OUT RECALL command.
     // REPLY: ACK
     void out_recall() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::OUT_RECALL);
+        auto packet = encoder.out_recall();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // UNKNOWN
     // REPLY: ACK
     void audio_in_recall() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::AUDIO_IN_RECALL);
+        auto packet = encoder.audio_in_recall();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // UNKNOWN
     // REPLY: ACK
     void audio_out_recall() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::AUDIO_OUT_RECALL);
+        auto packet = encoder.audio_out_recall();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // UNKNOWN
     // REPLY: ACK
     void lost_lock_reset() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::LOST_LOCK_RESET);
+        auto packet = encoder.lost_lock_reset();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
@@ -884,10 +793,9 @@ public:
     // the Cue channel is selected.
     // REPLY: ACK
     void edit_preset(const uint8_t data1, const uint8_t data2) {
-        Serial.print(__func__);
-        Serial.print(" : ");
         // TODO: more user-friendly arguments?
-        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::EDIT_PRESET, data1, data2);
+        auto packet = encoder.edit_preset(data1, data2);
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
@@ -896,47 +804,42 @@ public:
     // for example:
     // Send: 44 31 00 05 00 00 7A (Set the pre-roll duration to 5 seconds)
     // REPLY: ACK
-    void preroll_prset(const uint8_t hours, const uint8_t minutes, const uint8_t seconds, const uint8_t frames) {
-        Serial.print(__func__);
-        Serial.print(" : ");
+    void preroll_preset(const uint8_t hours, const uint8_t minutes, const uint8_t seconds, const uint8_t frames) {
         // TODO: need to convert to BCD(Binary Coded Decimal)?
-        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::PREROLL_PRESET, frames, seconds, minutes, hours);
+        auto packet = encoder.preroll_preset(hours, minutes, seconds, frames);
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // UNKNOWN
     // REPLY: ACK
     void tape_audio_select(const uint8_t v) {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::TAPE_AUDIO_SELECT, v);
+        auto packet = encoder.tape_audio_select(v);
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // UNKNOWN
     // REPLY: ACK
     void servo_ref_select(const uint8_t v) {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::SERVO_REF_SELECT, v);
+        auto packet = encoder.servo_ref_select(v);
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // UNKNOWN
     // REPLY: ACK
     void head_select(const uint8_t v) {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::HEAD_SELECT, v);
+        auto packet = encoder.head_select(v);
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // UNKNOWN
     // REPLY: ACK
     void color_frame_select(const uint8_t v) {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::COLOR_FRAME_SELECT, v);
+        auto packet = encoder.color_frame_select(v);
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
@@ -948,190 +851,162 @@ public:
     // Send : 41 36 11 88(Set the device to time code head)
     // REPLY: ACK
     void timer_mode_select(const uint8_t v) {
-        Serial.print(__func__);
-        Serial.print(" : ");
         // TODO: more user-friendly arguments?
-        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::TIMER_MODE_SELECT, v);
+        auto packet = encoder.timer_mode_select(v);
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // UNKNOWN
     // REPLY: ACK
     void input_check(const uint8_t v) {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::INPUT_CHECK, v);
+        auto packet = encoder.input_check(v);
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // UNKNOWN
     // REPLY: ACK
     void edit_field_select(const uint8_t v) {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::EDIT_FIELD_SELECT, v);
+        auto packet = encoder.edit_field_select(v);
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // UNKNOWN
     // REPLY: ACK
     void freeze_mode_select(const uint8_t v) {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::FREEZE_MODE_SELECT, v);
+        auto packet = encoder.freeze_mode_select(v);
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // UNKNOWN
     // REPLY: ACK
-    void record_inhibit(const uint8_t v) {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        // send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::INPUT_CHECK, v);
+    void record_inhibit() {
         // TODO: NOT IMPLEMENTED
-        Serial.println("NOT IMPLEMENTED");
+        auto packet = encoder.record_inhibit();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // This command switches the device from AUTO mode.
     // REPLY: ACK
     void auto_mode_off() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::AUTO_MODE_OFF);
+        auto packet = encoder.auto_mode_off();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // This command switches the device to AUTO mode.
     // REPLY: ACK
     void auto_mode_on() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::AUTO_MODE_ON);
+        auto packet = encoder.auto_mode_on();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // UNKNOWN
     // REPLY: ACK
     void spot_erase_off() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::SPOT_ERASE_OFF);
+        auto packet = encoder.spot_erase_off();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // UNKNOWN
     // REPLY: ACK
     void spot_erase_on() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::SPOT_ERASE_ON);
+        auto packet = encoder.spot_erase_on();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // UNKNOWN
     // REPLY: ACK
     void audio_split_off() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::AUDIO_SPLIT_OFF);
+        auto packet = encoder.audio_split_off();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // UNKNOWN
     // REPLY: ACK
     void audio_split_on() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::AUDIO_SPLIT_OFF);
+        auto packet = encoder.audio_split_on();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // UNKNOWN
     // REPLY: ACK
     void output_h_phase() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        // send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::OUTPUT_H_PHASE);
         // TODO: NOT IMPLEMENTED
-        Serial.println("NOT IMPLEMENTED");
+        auto packet = encoder.output_h_phase();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // UNKNOWN
     // REPLY: ACK
     void output_video_phase() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        // send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::OUTPUT_VIDEO_PHASE);
         // TODO: NOT IMPLEMENTED
-        Serial.println("NOT IMPLEMENTED");
+        auto packet = encoder.output_video_phase();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // UNKNOWN
     // REPLY: ACK
     void audio_input_level() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        // send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::AUDIO_INPUT_LEVEL);
         // TODO: NOT IMPLEMENTED
-        Serial.println("NOT IMPLEMENTED");
+        auto packet = encoder.audio_input_level();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // UNKNOWN
     // REPLY: ACK
     void audio_output_level() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        // send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::AUDIO_OUTPUT_LEVEL);
         // TODO: NOT IMPLEMENTED
-        Serial.println("NOT IMPLEMENTED");
+        auto packet = encoder.audio_output_level();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // UNKNOWN
     // REPLY: ACK
     void audio_adv_level() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        // send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::AUDIO_ADV_LEVEL);
         // TODO: NOT IMPLEMENTED
-        Serial.println("NOT IMPLEMENTED");
+        auto packet = encoder.audio_adv_level();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // UNKNOWN
     // REPLY: ACK
     void audio_output_phase() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        // send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::AUDIO_OUTPUT_PHASE);
         // TODO: NOT IMPLEMENTED
-        Serial.println("NOT IMPLEMENTED");
+        auto packet = encoder.audio_output_phase();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // UNKNOWN
     // REPLY: ACK
     void audio_adv_output_phase() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        // send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::AUDIO_ADV_OUTPUT_PHASE);
         // TODO: NOT IMPLEMENTED
-        Serial.println("NOT IMPLEMENTED");
+        auto packet = encoder.audio_adv_output_phase();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // UNKNOWN
     // REPLY: ACK
     void cross_fade_time_preset() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        // send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::CROSS_FADE_TIME_PRESET);
         // TODO: NOT IMPLEMENTED
-        Serial.println("NOT IMPLEMENTED");
+        auto packet = encoder.cross_fade_time_preset();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
@@ -1171,34 +1046,30 @@ public:
     //                    : tracking menu can be made in remote mode.
     // REPLY: ACK
     void local_key_map() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        // send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::LOCAL_KEY_MAP);
         // TODO: NOT IMPLEMENTED
-        Serial.println("NOT IMPLEMENTED");
+        auto packet = encoder.local_key_map();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // UNKNOWN
     // REPLY: ACK
     void still_off_time(const uint8_t data1, const uint8_t data2) {
-        Serial.print(__func__);
-        Serial.print(" : ");
         // TODO: more user-friendly arguments?
-        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::STILL_OFF_TIME, data1, data2);
+        auto packet = encoder.still_off_time(data1, data2);
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // UNKNOWN
     // REPLY: ACK
     void stby_off_time(const uint8_t data1, const uint8_t data2) {
-        Serial.print(__func__);
-        Serial.print(" : ");
         // TODO: more user-friendly arguments?
-        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::STBY_OFF_TIME, data1, data2);
+        auto packet = encoder.stby_off_time(data1, data2);
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
-    // 6 - Sense Request
+    // =============== 6 - Sense Request ===============
 
     // DESCRIPTION:
     // Request the type of time code data the device is generating,
@@ -1209,9 +1080,8 @@ public:
     // DATA-1 = 11: Request for GEN TC & UB -> GEN TC & UB DATA 78.08 Respond
     // REPLY: based on DATA-1 as above
     void tc_gen_sense(const uint8_t data1) {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::SENSE_REQUEST, SenseRequest::TC_GEN_SENSE, data1);
+        auto packet = encoder.tc_gen_sense(data1);
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
     void tc_gen_sense_tc() {
         tc_gen_sense(TcGenData::TC);
@@ -1235,9 +1105,8 @@ public:
     // REPLY: based on CURRENT TIME SENSE RETURN chart
     // https://www.drastic.tv/images/protocol/p_tcrtn.gif
     void current_time_sense(const uint8_t data1) {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::SENSE_REQUEST, SenseRequest::CURRENT_TIME_SENSE, data1);
+        auto packet = encoder.current_time_sense(data1);
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
@@ -1245,9 +1114,8 @@ public:
     // See the CUE UP WITH DATA command for the time code return format.
     // REPLY: IN_DATA
     void in_data_sense() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::SENSE_REQUEST, SenseRequest::IN_DATA_SENSE);
+        auto packet = encoder.in_data_sense();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
@@ -1255,27 +1123,24 @@ public:
     // See the CUE UP WITH DATA command for the time code return format.
     // REPLY: OUT_DATA
     void out_data_sense() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::SENSE_REQUEST, SenseRequest::OUT_DATA_SENSE);
+        auto packet = encoder.out_data_sense();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // UNKNOWN
     // REPLY: A_IN_DATA
     void audio_in_data_sense() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::SENSE_REQUEST, SenseRequest::AUDIO_IN_DATA_SENSE);
+        auto packet = encoder.audio_in_data_sense();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // UNKNOWN
     // REPLY: A_OUT_DATA
     void audio_out_data_sense() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::SENSE_REQUEST, SenseRequest::AUDIO_OUT_DATA_SENSE);
+        auto packet = encoder.audio_out_data_sense();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
@@ -1289,159 +1154,140 @@ public:
     // i.e. DATA No.3 to DATA No.6 of the 74.20 STATUS DATA
     // REPLY: STATUS_DATA as above
     void status_sense(const uint8_t start = 0, const uint8_t size = 10) {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        const uint8_t v = size | (start << 4);
-        send(Cmd1::SENSE_REQUEST, SenseRequest::STATUS_SENSE, v);
+        auto packet = encoder.status_sense(start, size);
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // UNKNOWN
     // REPLY: ACK
     void extended_vtr_status(const uint8_t data1) {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::SENSE_REQUEST, SenseRequest::EXTENDED_VTR_STATUS, data1);
+        auto packet = encoder.extended_vtr_status(data1);
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // UNKNOWN
     // REPLY: ACK
     void signal_control_sense(const uint8_t data1, const uint8_t data2) {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::SENSE_REQUEST, SenseRequest::SIGNAL_CONTROL_SENSE, data1, data2);
+        auto packet = encoder.signal_control_sense(data1, data2);
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // UNKNOWN
     // REPLY: ACK
     void local_keymap_sense() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        // send(Cmd1::SENSE_REQUEST, SenseRequest::LOCAL_KEYMAP_SENSE);
         // TODO: NOT IMPLEMENTED
-        Serial.println("NOT IMPLEMENTED");
+        auto packet = encoder.local_keymap_sense();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // UNKNOWN
     // REPLY: ACK
     void head_meter_sense(const uint8_t data1) {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::SENSE_REQUEST, SenseRequest::HEAD_METER_SENSE, data1);
+        auto packet = encoder.head_meter_sense(data1);
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // UNKNOWN
     // REPLY: ACK
     void remaining_time_sense() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::SENSE_REQUEST, SenseRequest::REMAINING_TIME_SENSE);
+        auto packet = encoder.remaining_time_sense();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // UNKNOWN
     // REPLY: SPEED_DATA
     void cmd_speed_sense() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::SENSE_REQUEST, SenseRequest::CMD_SPEED_SENSE);
+        auto packet = encoder.cmd_speed_sense();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // UNKNOWN
     // REPLY: ACK
     void edit_preset_sense(const uint8_t data1) {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::SENSE_REQUEST, SenseRequest::EDIT_PRESET_SENSE, data1);
+        auto packet = encoder.edit_preset_sense(data1);
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // UNKNOWN
     // REPLY: PREROLL_TIME_DATA
     void preroll_time_sense() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::SENSE_REQUEST, SenseRequest::PREROLL_TIME_SENSE);
+        auto packet = encoder.preroll_time_sense();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // UNKNOWN
     // REPLY: TIMER_MODE_DATA
     void timer_mode_sense() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::SENSE_REQUEST, SenseRequest::TIMER_MODE_SENSE);
+        auto packet = encoder.timer_mode_sense();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // UNKNOWN
     // REPLY: RECORD_INHIBIT_STATUS
     void record_inhibit_sense() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::SENSE_REQUEST, SenseRequest::RECORD_INHIBIT_SENSE);
+        auto packet = encoder.record_inhibit_sense();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // UNKNOWN
     // REPLY: RECORD_INHIBIT_STATUS
     void da_inp_emph_sense() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::SENSE_REQUEST, SenseRequest::DA_INPUT_EMPHASIS_SENSE);
+        auto packet = encoder.da_inp_emph_sense();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // UNKNOWN
     // REPLY: RECORD_INHIBIT_STATUS
     void da_pb_emph_sense() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::SENSE_REQUEST, SenseRequest::DA_PLAYBACK_EMPHASIS_SENSE);
+        auto packet = encoder.da_pb_emph_sense();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // UNKNOWN
     // REPLY: RECORD_INHIBIT_STATUS
     void da_samp_freq_sense() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::SENSE_REQUEST, SenseRequest::DA_SAMPLING_FREQUENCY_SENSE);
+        auto packet = encoder.da_samp_freq_sense();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // UNKNOWN
     // REPLY: RECORD_INHIBIT_STATUS
     void cross_fade_time_sense(const uint8_t data1) {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::SENSE_REQUEST, SenseRequest::CROSS_FADE_TIME_SENSE, data1);
+        auto packet = encoder.cross_fade_time_preset();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
-    // A - BlackMagic Advanced Media Protocol
+    // =============== A - BlackMagic Advanced Media Protocol ===============
 
     // DESCRIPTION:
     // 16-bit little endian fractional position [0..65535]
     // REPLY: ACK
     void bmd_seek_to_timeline_pos(const uint8_t data1, const uint8_t data2) {
-        Serial.print(__func__);
-        Serial.print(" : ");
         // TODO: more user-friendly arguments?
-        send(Cmd1::SYSTEM_CONTROL, SystemCtrl::BMD_SEEK_TO_TIMELINE_POS, data1, data2);
+        auto packet = encoder.bmd_seek_to_timeline_pos(data1, data2);
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // UNKNOWN
     // REPLY: ACK
-    void clearPlaylist() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::TRANSPORT_CONTROL, TransportCtrl::CLEAR_PLAYLIST);
+    void clear_playlist() {
+        auto packet = encoder.clear_playlist();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
@@ -1451,11 +1297,9 @@ public:
     // 4 Byte out point timecode (format is FFSSMMHH)
     // REPLY: ACK
     void append_preset() {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        // send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::APPEND_PRESET);
         // TODO: NOT IMPLEMENTED
-        Serial.println("NOT IMPLEMENTED");
+        auto packet = encoder.append_preset();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
@@ -1463,10 +1307,8 @@ public:
     // Bit1 is single clip/timeline, 0 = single clip, 1 = timeline
     // REPLY: ACK
     void set_playback_loop(const bool b_enable, const uint8_t mode = LoopMode::SINGLE_CLIP) {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        const uint8_t v = (uint8_t)b_enable | ((uint8_t)(mode & 0x01) << 1);
-        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::SET_PLAYBACK_LOOP, v);
+        auto packet = encoder.set_playback_loop(b_enable, mode);
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
@@ -1476,27 +1318,24 @@ public:
     // 3 = Show black
     // REPLY: ACK
     void set_stop_mode(const uint8_t stop_mode) {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::SET_STOP_MODE, stop_mode);
+        auto packet = encoder.set_stop_mode(stop_mode);
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // One-byte signed integer, which is the number of clips to skip (negative for backwards).
     // REPLY: ACK
     void bmd_seek_relative_clip(const int8_t index) {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::BMD_EXTENSION, BmdExtensions::SEEK_RELATIVE_CLIP, index);
+        auto packet = encoder.bmd_seek_relative_clip(index);
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
     // 8-bit signed number of clips to skip from current clip
     // REPLY: ACK
     void auto_skip(const int8_t n) {
-        Serial.print(__func__);
-        Serial.print(" : ");
-        send(Cmd1::BMD_ADVANCED_MEDIA_PRTCL, BmdAdvancedMediaProtocol::AUTO_SKIP, (uint8_t)n);
+        auto packet = encoder.auto_skip(n);
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     // DESCRIPTION:
@@ -1504,11 +1343,10 @@ public:
     // when x = 1, # clips can be specified in the send data
     // REPLY: IDListing
     void list_next_id() {
-        Serial.print(__func__);
-        Serial.print(" : ");
         // send(Cmd1::BMD_ADVANCED_MEDIA_PRTCL, BmdAdvancedMediaProtocol::LIST_NEXT_ID);
         // TODO: NOT IMPLEMENTED
-        Serial.println("NOT IMPLEMENTED");
+        auto packet = encoder.list_next_id();
+        SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     bool is_media_exist() const { return !sts.b_cassette_out; }  // set if no ssd is present
@@ -1612,36 +1450,36 @@ public:
     }
 
 private:
-    void send(uint8_t& crc) {
-        SONY9PINREMOTE_STREAM_WRITE(crc);
-        Serial.println(crc, HEX);
-    }
+    // void send(uint8_t& crc) {
+    //     SONY9PINREMOTE_STREAM_WRITE(crc);
+    //     Serial.println(crc, HEX);
+    // }
 
-    template <typename... Args>
-    void send(uint8_t& crc, const uint8_t arg, Args&&... args) {
-        SONY9PINREMOTE_STREAM_WRITE(arg);
-        crc += arg;
-        Serial.print(arg, HEX);
-        Serial.print(" ");
-        send(crc, util::forward<Args>(args)...);
-    }
+    // template <typename... Args>
+    // void send(uint8_t& crc, const uint8_t arg, Args&&... args) {
+    //     SONY9PINREMOTE_STREAM_WRITE(arg);
+    //     crc += arg;
+    //     Serial.print(arg, HEX);
+    //     Serial.print(" ");
+    //     send(crc, util::forward<Args>(args)...);
+    // }
 
-    template <typename Cmd2, typename... Args>
-    void send(const Cmd1 cmd1, const Cmd2 cmd2, Args&&... args) {
-        if (!ready()) return;
-        decoder.clear();
-        uint8_t size = sizeof...(args);
-        uint8_t header = (uint8_t)cmd1 | (size & 0x0F);
-        uint8_t crc = header + (uint8_t)cmd2;
-        SONY9PINREMOTE_STREAM_WRITE(header);
-        SONY9PINREMOTE_STREAM_WRITE((uint8_t)cmd2);
-        Serial.print("send data = ");
-        Serial.print(header, HEX);
-        Serial.print(" ");
-        Serial.print((uint8_t)cmd2, HEX);
-        Serial.print(" ");
-        send(crc, util::forward<Args>(args)...);
-    }
+    // template <typename Cmd2, typename... Args>
+    // void send(const Cmd1 cmd1, const Cmd2 cmd2, Args&&... args) {
+    //     if (!ready()) return;
+    //     decoder.clear();
+    //     uint8_t size = sizeof...(args);
+    //     uint8_t header = (uint8_t)cmd1 | (size & 0x0F);
+    //     uint8_t crc = header + (uint8_t)cmd2;
+    //     SONY9PINREMOTE_STREAM_WRITE(header);
+    //     SONY9PINREMOTE_STREAM_WRITE((uint8_t)cmd2);
+    //     Serial.print("send data = ");
+    //     Serial.print(header, HEX);
+    //     Serial.print(" ");
+    //     Serial.print((uint8_t)cmd2, HEX);
+    //     Serial.print(" ");
+    //     send(crc, util::forward<Args>(args)...);
+    // }
 };
 
 }  // namespace sony9pin

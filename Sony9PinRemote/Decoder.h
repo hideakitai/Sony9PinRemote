@@ -45,8 +45,7 @@ struct TimeCodeAndUserBits {
     }
 
 class Decoder {
-    static constexpr uint8_t MAX_RESPONSE_SIZE {15 + 3};
-    uint8_t buffer[MAX_RESPONSE_SIZE];
+    uint8_t buffer[MAX_PACKET_SIZE];
     uint8_t next_size {0};
     uint8_t curr_size {0};
 
@@ -79,7 +78,7 @@ public:
     }
 
     void clear() {
-        memset(buffer, 0, MAX_RESPONSE_SIZE);
+        memset(buffer, 0, MAX_PACKET_SIZE);
         next_size = 0;
         curr_size = 0;
     }

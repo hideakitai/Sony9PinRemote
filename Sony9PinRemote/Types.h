@@ -8,10 +8,8 @@
 
 namespace sony9pin {
 
-namespace serial {
-    static constexpr size_t BAUDRATE {38400};
-    static constexpr size_t CONFIG {SERIAL_8O1};
-}  // namespace serial
+// Common Constants
+static constexpr uint8_t MAX_PACKET_SIZE {15 + 3};
 
 // Data Structs for Decoder
 
