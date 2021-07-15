@@ -1502,7 +1502,7 @@ private:
     template <typename Cmd2, typename... Args>
     void send(const Cmd1 cmd1, const Cmd2 cmd2, Args&&... args) {
         if (!ready()) return;
-        res.next();
+        res.clear();
         uint8_t size = sizeof...(args);
         uint8_t header = (uint8_t)cmd1 | (size & 0x0F);
         uint8_t crc = header + (uint8_t)cmd2;
