@@ -30,9 +30,9 @@ void setup() {
         deck.device_type();
         if (deck.parse_until(1000)) {
             Serial.print("device type = ");
-            Serial.println(deck.device(), HEX);
+            Serial.println(deck.device_type(), HEX);
 
-            if (deck.device() == Sony9PinDevice::BLACKMAGIC_HYPERDECK_STUDIO_MINI_NTSC) {
+            if (deck.device_type() == Sony9PinDevice::BLACKMAGIC_HYPERDECK_STUDIO_MINI_NTSC) {
                 Serial.println("this device is BlackMagic HyperDeck Studio Mini NTSC");
             }
         } else
