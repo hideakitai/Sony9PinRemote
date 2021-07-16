@@ -29,6 +29,8 @@ using StreamType = Stream;
         }                                           \
     }
 #define SONY9PINREMOTE_STREAM_READ() stream->read()
+#define SONY9PINREMOTE_STREAM_AVAILABLE() stream->available()
+#define SONY9PINREMOTE_STREAM_FLUSH() stream->flush()
 #define SONY9PINREMOTE_ELAPSED_MILLIS() millis()
 
 // openFrameworks
@@ -42,6 +44,8 @@ using StreamType = ofSerial;
         }                                           \
     }
 #define SONY9PINREMOTE_STREAM_READ() stream->readByte()
+#define SONY9PINREMOTE_STREAM_AVAILABLE() stream->available()
+#define SONY9PINREMOTE_STREAM_FLUSH() stream->flush()
 #define SONY9PINREMOTE_ELAPSED_MILLIS() ofGetElapsedTimeMillis()
 
 #endif  // ARDUINO / OF_VERSION_MAIJOR
@@ -82,14 +86,14 @@ public:
     void attach(StreamType& s, const bool force_send = false) {
         b_force_send = force_send;
         stream = &s;
-        stream->flush();
-        while (stream->available())
-            stream->read();
+        SONY9PINREMOTE_STREAM_FLUSH();
+        while (SONY9PINREMOTE_STREAM_AVAILABLE())
+            SONY9PINREMOTE_STREAM_READ();
     }
 
     bool parse() {
-        while (stream->available()) {
-            if (decoder.feed(stream->read())) {
+        while (SONY9PINREMOTE_STREAM_AVAILABLE()) {
+            if (decoder.feed(SONY9PINREMOTE_STREAM_READ())) {
                 // store the data which is useful if it can be referred anytime we want
                 switch (decoder.cmd1()) {
                     case Cmd1::SYSTEM_CONTROL_RETURN: {
