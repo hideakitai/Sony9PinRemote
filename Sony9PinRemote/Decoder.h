@@ -9,6 +9,16 @@
 
 #include "Types.h"
 
+#include "util/ArxTypeTraits/ArxTypeTraits.h"
+#include "util/ArxContainer/ArxContainer.h"
+#include "util/DebugLog/DebugLog.h"
+
+#ifdef SONY9PINREMOTE_DEBUGLOG_ENABLE
+#include "util/DebugLog/DebugLogEnable.h"
+#else
+#include "util/DebugLog/DebugLogDisable.h"
+#endif
+
 namespace sony9pin {
 
 struct TimeCode {
@@ -30,18 +40,18 @@ struct TimeCodeAndUserBits {
     UserBits ub;
 };
 
-#define SONY9PIN_RESPONSE_CHECK(c1, c2, sz, ret)           \
-    if (!available()) {                                    \
-        Serial.println("[Error] No response available");   \
-        return ret;                                        \
-    }                                                      \
-    if (!(cmd1() == c1) || !(cmd2() == c2)) {              \
-        Serial.println("[Error] Packet type mismatch");    \
-        return ret;                                        \
-    }                                                      \
-    if (size() != sz) {                                    \
-        Serial.println("[Error] Packet size not correct"); \
-        return ret;                                        \
+#define SONY9PIN_RESPONSE_CHECK(c1, c2, sz, ret)                                      \
+    if (!available()) {                                                               \
+        LOG_ERROR("No response available");                                           \
+        return ret;                                                                   \
+    }                                                                                 \
+    if (!(cmd1() == c1) || !(cmd2() == c2)) {                                         \
+        LOG_ERROR("Packet type mismatch:", cmd1(), "!=", c1, "or", cmd2(), "!=", c2); \
+        return ret;                                                                   \
+    }                                                                                 \
+    if (size() != sz) {                                                               \
+        LOG_ERROR("Packet size not correct:", size(), "should be", sz);               \
+        return ret;                                                                   \
     }
 
 class Decoder {
@@ -97,7 +107,7 @@ public:
                 next_size = size + 3;  // header + cmd2 + size + checksum
                 buffer[curr_size++] = d;
             } else {  // this is not response headr
-                Serial.println("response type error !");
+                LOG_ERROR("Packet is not response type:", type);
                 clear();
             }
         } else if (curr_size < next_size) {
@@ -111,12 +121,12 @@ public:
                 if (d == checksum) {
                     return true;
                 } else {
+                    LOG_ERROR("Response checksum is not matched:", checksum, "should be", d);
                     clear();
-                    Serial.println("ERROR: checksum check failed!");
                 }
             }
         } else {
-            Serial.println("ERROR: won't come here!");
+            LOG_ERROR("Unexpected: won't come here");
             clear();
         }
 
@@ -666,5 +676,7 @@ private:
 };
 
 }  // namespace sony9pin
+
+#include "util/DebugLog/DebugLogRestoreState.h"
 
 #endif  // SONY9PINREMOTE_DECODER_H
