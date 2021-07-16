@@ -21,16 +21,26 @@ namespace sony9pin {
 // Arduino
 #ifdef ARDUINO
 using StreamType = Stream;
-#define SONY9PINREMOTE_STREAM_WRITE(data, size) \
-    if (size > 0) stream->write(data, size)
+#define SONY9PINREMOTE_STREAM_WRITE(data, size)     \
+    if (size > 0) {                                 \
+        if (b_force_send || !b_wait_for_response) { \
+            stream->write(data, size);              \
+            b_wait_for_response = true;             \
+        }                                           \
+    }
 #define SONY9PINREMOTE_STREAM_READ() stream->read()
 #define SONY9PINREMOTE_ELAPSED_MILLIS() millis()
 
 // openFrameworks
 #elif defined(OF_VERSION_MAJOR)
 using StreamType = ofSerial;
-#define SONY9PINREMOTE_STREAM_WRITE(data, size) \
-    if (size > 0) stream->writeBytes(data, size)
+#define SONY9PINREMOTE_STREAM_WRITE(data, size)     \
+    if (size > 0) {                                 \
+        if (b_force_send || !b_wait_for_response) { \
+            stream->writeBytes(data, size);         \
+            b_wait_for_response = true;             \
+        }                                           \
+    }
 #define SONY9PINREMOTE_STREAM_READ() stream->readByte()
 #define SONY9PINREMOTE_ELAPSED_MILLIS() ofGetElapsedTimeMillis()
 
@@ -66,6 +76,7 @@ class Controller {
     uint8_t status_size {10};
 
     bool b_force_send {false};
+    bool b_wait_for_response {false};
 
 public:
     void attach(StreamType& s, const bool force_send = false) {
@@ -104,6 +115,7 @@ public:
                     default:
                         break;
                 }
+                b_wait_for_response = false;
                 return true;
             }
         }
@@ -120,7 +132,7 @@ public:
         }
     }
 
-    bool ready() const { return b_force_send ? true : !decoder.busy(); }
+    bool ready() const { return b_force_send ? true : (!decoder.busy() && !b_wait_for_response); }
     bool available() const { return available(); }
 
     uint16_t device_type() const { return dev_type; }
