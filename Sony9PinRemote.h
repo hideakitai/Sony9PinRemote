@@ -17,19 +17,30 @@
 namespace sony9pin {
 
 #ifdef SONY9PINREMOTE_ENABLE_STREAM
+
+// Arduino
 #ifdef ARDUINO
 using StreamType = Stream;
 #define SONY9PINREMOTE_STREAM_WRITE(data, size) \
     if (size > 0) stream->write(data, size)
-#define SONY9PINREMOTE_STREAM_READ stream->read
+#define SONY9PINREMOTE_STREAM_READ() stream->read()
+#define SONY9PINREMOTE_ELAPSED_MILLIS() millis()
+
+// openFrameworks
 #elif defined(OF_VERSION_MAJOR)
 using StreamType = ofSerial;
 #define SONY9PINREMOTE_STREAM_WRITE(data, size) \
     if (size > 0) stream->writeBytes(data, size)
-#define SONY9PINREMOTE_STREAM_READ stream->readByte
-#endif
-#else
+#define SONY9PINREMOTE_STREAM_READ() stream->readByte()
+#define SONY9PINREMOTE_ELAPSED_MILLIS() ofGetElapsedTimeMillis()
+
+#endif  // ARDUINO / OF_VERSION_MAIJOR
+
+// Not Supported
+#else  // SONY9PINREMOTE_ENABLE_STREAM
+
 #error THIS PLATFORM IS NOT SUPPORTED
+
 #endif  // SONY9PINREMOTE_ENABLE_STREAM
 
 namespace serial {
@@ -51,6 +62,9 @@ class Controller {
     Errors err;
     size_t err_count {0};
 
+    uint8_t status_start {0};
+    uint8_t status_size {10};
+
     bool b_force_send {false};
 
 public:
@@ -66,9 +80,8 @@ public:
         while (stream->available()) {
             if (decoder.feed(stream->read())) {
                 // store the data which is useful if it can be referred anytime we want
-                // TODO: size check???
                 switch (decoder.cmd1()) {
-                    case Cmd1::SYSTEM_CONTROL: {
+                    case Cmd1::SYSTEM_CONTROL_RETURN: {
                         switch (decoder.cmd2()) {
                             case SystemControlReturn::NAK: {
                                 err_count++;
@@ -79,26 +92,17 @@ public:
                                 dev_type = decoder.device_type();
                                 break;
                             }
-                            default: {
-                                Serial.println("[Error] Invalid System Control Command 2");
-                                break;
-                            }
                         }
                     }
                     case Cmd1::SENSE_RETURN: {
-                        switch (decoder.cmd2()) {
-                            case SenseReturn::STATUS_DATA: {
-                                sts = decoder.status_sense();
-                                break;
-                            }
-                            default: {
-                                break;
-                            }
+                        if (decoder.cmd2() == SenseReturn::STATUS_DATA) {
+                            // decode status based on requested range by `status_sense()`
+                            sts = decoder.status_sense(status_start, status_size);
                         }
-                    }
-                    default: {
                         break;
                     }
+                    default:
+                        break;
                 }
                 return true;
             }
@@ -107,12 +111,11 @@ public:
     }
 
     bool parse_until(const uint32_t timeout_ms) {
-        // TODO: make abstractin (millis())
-        const uint32_t begin_ms = millis();
+        const uint32_t begin_ms = SONY9PINREMOTE_ELAPSED_MILLIS();
         while (true) {
             if (parse())
                 return true;
-            if (millis() > begin_ms + timeout_ms)
+            if (SONY9PINREMOTE_ELAPSED_MILLIS() > begin_ms + timeout_ms)
                 return false;
         }
     }
@@ -234,8 +237,8 @@ public:
         SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
-    void cue_up_with_data(const uint8_t hours, const uint8_t minutes, const uint8_t seconds, const uint8_t frames) {
-        auto packet = encoder.cue_up_with_data(hours, minutes, seconds, frames);
+    void cue_up_with_data(const uint8_t hh, const uint8_t mm, const uint8_t ss, const uint8_t ff) {
+        auto packet = encoder.cue_up_with_data(hh, mm, ss, ff);
         SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
@@ -333,22 +336,17 @@ public:
 
     // =============== 4 - Preset/Select Control ===============
 
-    void timer_1_preset(const uint8_t hours, const uint8_t minutes, const uint8_t seconds, const uint8_t frames) {
-        // TODO: need to convert to BCD(Binary Coded Decimal)?
-        // TODO: Drop or Non-Drop
-        auto packet = encoder.timer_1_preset(hours, minutes, seconds, frames);
+    void timer_1_preset(const uint8_t hh, const uint8_t mm, const uint8_t ss, const uint8_t ff, const bool is_df) {
+        auto packet = encoder.timer_1_preset(hh, mm, ss, ff, is_df);
         SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
-    void time_code_preset(const uint8_t hours, const uint8_t minutes, const uint8_t seconds, const uint8_t frames) {
-        // TODO: need to convert to BCD(Binary Coded Decimal)?
-        // TODO: Drop or Non-Drop
-        auto packet = encoder.time_code_preset(hours, minutes, seconds, frames);
+    void time_code_preset(const uint8_t hh, const uint8_t mm, const uint8_t ss, const uint8_t ff, const bool is_df) {
+        auto packet = encoder.time_code_preset(hh, mm, ss, ff, is_df);
         SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
     void user_bit_preset(const uint8_t data1, const uint8_t data2, const uint8_t data3, const uint8_t data4) {
-        // TODO: more user-friendly arguments?
         auto packet = encoder.user_bit_preset(data1, data2, data3, data4);
         SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
@@ -380,15 +378,13 @@ public:
         SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
-    void in_data_preset(const uint8_t hours, const uint8_t minutes, const uint8_t seconds, const uint8_t frames) {
-        // TODO: need to convert to BCD(Binary Coded Decimal)?
-        auto packet = encoder.in_data_preset(hours, minutes, seconds, frames);
+    void in_data_preset(const uint8_t hh, const uint8_t mm, const uint8_t ss, const uint8_t ff) {
+        auto packet = encoder.in_data_preset(hh, mm, ss, ff);
         SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
-    void out_data_preset(const uint8_t hours, const uint8_t minutes, const uint8_t seconds, const uint8_t frames) {
-        // TODO: need to convert to BCD(Binary Coded Decimal)?
-        auto packet = encoder.out_data_preset(hours, minutes, seconds, frames);
+    void out_data_preset(const uint8_t hh, const uint8_t mm, const uint8_t ss, const uint8_t ff) {
+        auto packet = encoder.out_data_preset(hh, mm, ss, ff);
         SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
@@ -495,9 +491,8 @@ public:
         SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
-    void preroll_preset(const uint8_t hours, const uint8_t minutes, const uint8_t seconds, const uint8_t frames) {
-        // TODO: need to convert to BCD(Binary Coded Decimal)?
-        auto packet = encoder.preroll_preset(hours, minutes, seconds, frames);
+    void preroll_preset(const uint8_t hh, const uint8_t mm, const uint8_t ss, const uint8_t ff) {
+        auto packet = encoder.preroll_preset(hh, mm, ss, ff);
         SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
@@ -521,9 +516,8 @@ public:
         SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
-    void timer_mode_select(const uint8_t v) {
-        // TODO: more user-friendly arguments?
-        auto packet = encoder.timer_mode_select(v);
+    void timer_mode_select(const TimerMode tm) {
+        auto packet = encoder.timer_mode_select(tm);
         SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
@@ -686,6 +680,8 @@ public:
     }
 
     void status_sense(const uint8_t start = 0, const uint8_t size = 10) {
+        status_start = start;
+        status_size = size;
         auto packet = encoder.status_sense(start, size);
         SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
@@ -806,42 +802,113 @@ public:
         SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
-    // TODO: implement!
     // =============== 1 - System Control Return ===============
 
-    // TODO: implement!
+    bool ack() const { return decoder.ack(); }
+    Errors nak() const { return decoder.nak(); }
+    uint16_t device_tpe() const { return decoder.device_type(); }
+
     // =============== 7 - Sense Return ===============
 
-    // TODO: implement!
+    // Responses to 61.0A Gen Time Sense
+    TimeCodeAndUserBits gen_tc_ub() const { return decoder.gen_tc_ub(); }
+    TimeCode gen_tc() const { return decoder.gen_tc(); }
+    UserBits gen_ub() const { return decoder.gen_ub(); }
+
+    // Responses to 61.0C Current Time Sense
+    TimeCode timer_1() const { return decoder.timer_1(); }
+    TimeCode timer_2() const { return decoder.timer_2(); }
+    TimeCodeAndUserBits ltc_tc_ub() const { return decoder.ltc_tc_ub(); }
+    TimeCode ltc_tc() const { return decoder.ltc_tc(); }
+    UserBits ltc_ub() const { return decoder.ltc_ub(); }
+    TimeCodeAndUserBits vitc_tc_ub() const { return decoder.vitc_tc_ub(); }
+    TimeCode vitc_tc() const { return decoder.vitc_tc(); }
+    UserBits vitc_ub() const { return decoder.vitc_ub(); }
+    TimeCodeAndUserBits ltc_interpolated_tc_ub() const { return decoder.ltc_interpolated_tc_ub(); }
+    TimeCode ltc_interpolated_tc() const { return decoder.ltc_interpolated_tc(); }
+    UserBits ltc_interpolated_ub() const { return decoder.ltc_interpolated_ub(); }
+    TimeCodeAndUserBits hold_vitc_tc_ub() const { return decoder.hold_vitc_tc_ub(); }
+    TimeCode hold_vitc_tc() const { return decoder.hold_vitc_tc(); }
+    UserBits hold_vitc_ub() const { return decoder.hold_vitc_ub(); }
+
+    // Responses to other sense requests
+    TimeCode in_data() const { return decoder.in_data(); }
+    TimeCode out_data() const { return decoder.out_data(); }
+    Status status_sense() const { return decoder.status_sense(status_start, status_size); }
+    TimeCode preroll_time() const { return decoder.preroll_time(); }
+    TimerMode timer_mode() const { return decoder.timer_mode(); }
+
     // =============== Status Checker ===============
 
-    // TODO: support more status
-    bool is_media_exist() const { return !sts.b_cassette_out; }  // set if no ssd is present
-    bool is_remote_enabled() const { return !sts.b_local; }      // set if remote is disabled (local control)
-    bool is_disk_available() const { return sts.b_standby; }     // set if a disk is available
-    bool is_stopping() const { return sts.b_stop; }
-    bool is_rewinding() const { return sts.b_rewind; }
-    bool is_forwarding() const { return sts.b_forward; }
-    bool is_recoding() const { return sts.b_record; }
-    bool is_playing() const { return sts.b_play; }
-    bool is_servo_lock() const { return sts.b_servo_lock; }
+    // byte 0
+    bool is_media_exist() const { return !sts.b_cassette_out; }           // set if no ssd is present
+    bool is_servo_ref_exist() const { return !sts.b_servo_ref_missing; }  // set if servo reference is absent
+    bool is_remote_enabled() const { return !sts.b_local; }               // set if remote is disabled (local control)
+    // byte 1
+    bool is_disk_available() const { return sts.b_standby; }  // set if a disk is available
+    bool is_stopping() const { return sts.b_stop; }           // When the machine is in full stop, this is 1. The thread state depends on the tape/ee and standby settings.
+    bool is_ejecting() const { return sts.b_eject; }          // When the tape is ejecting this is 1.
+    bool is_fast_reverse() const { return sts.b_rewind; }     // When the machine is in fast reverse this is 1.
+    bool is_fast_forward() const { return sts.b_forward; }    // When the machine is in fast forward this is 1.
+    bool is_recoding() const { return sts.b_record; }         // This bit goes from 0 to 1 some number of frames after the machine starts recording. For the DVR2000 we measured 5 frames. Others have varying delays on the record status.
+    bool is_playing() const { return sts.b_play; }            // This bit goes from 0 to 1 some number of frames after the machine starts playing. For the DVR2000 we measured 5 frames. Others have varying delays on the play status.
+    // byte 2
+    bool is_servo_locked() const { return sts.b_servo_lock; }  // 1 indicates servos are locked. This is a necessary condition for an edit to occur correctly.
+    bool is_tso_mode() const { return sts.b_tso_mode; }        // Bit is 1 in tape speed override: in this mode, audio and video are still locked though speed is off play speed by +/- up to 15%.
     bool is_shuttle() const { return sts.b_shuttle; }
     bool is_jog() const { return sts.b_jog; }
     bool is_var() const { return sts.b_var; }
-    bool is_reverse() const { return sts.b_direction; }    // clear if playback is forwarding, set if playback is reversing
-    bool is_paused() const { return sts.b_still; }         // set if playback is paused, or if in input preview mode
+    bool is_reverse() const { return sts.b_direction; }  // clear if playback is forwarding, set if playback is reversing
+    bool is_paused() const { return sts.b_still; }       // set if playback is paused, or if in input preview mode
+    bool is_cue_up() const { return sts.b_cue_up; }
+    // byte 3
     bool is_auto_mode() const { return sts.b_auto_mode; }  // set if in Auto Mode
-    bool is_a_out_set() const { return sts.b_audio_out_set; }
-    bool is_a_in_set() const { return sts.b_audio_in_set; }
+    bool is_freezing() const { return sts.b_freeze_on; }
+    bool is_cf_mode() const { return sts.b_cf_mode; }
+    bool is_audio_out_set() const { return sts.b_audio_out_set; }
+    bool is_audio_in_set() const { return sts.b_audio_in_set; }
     bool is_out_set() const { return sts.b_out_set; }
     bool is_in_set() const { return sts.b_in_set; }
+    // byte 4
     bool is_select_ee() const { return sts.b_select_ee; }  // set if in input preview mode
     bool is_full_ee() const { return sts.b_full_ee; }
+    bool is_edit() const { return sts.b_edit; }
+    bool is_review() const { return sts.b_review; }
+    bool is_auto_edit() const { return sts.b_auto_edit; }
+    bool is_preview() const { return sts.b_preview; }
+    bool is_preroll() const { return sts.b_preroll; }
+    // byte 5
+    bool is_insert() const { return sts.b_insert; }
+    bool is_assemble() const { return sts.b_assemble; }
+    bool is_video() const { return sts.b_video; }
+    bool is_a4() const { return sts.b_a4; }
+    bool is_a3() const { return sts.b_a3; }
+    bool is_a2() const { return sts.b_a2; }
+    bool is_a1() const { return sts.b_a1; }
+    // byte 6
     bool is_lamp_still() const { return sts.b_lamp_still; }  // set according to playback speed and direction
     bool is_lamp_fwd() const { return sts.b_lamp_fwd; }
     bool is_lamp_rev() const { return sts.b_lamp_rev; }
+    bool is_srch_led_8() const { return sts.b_srch_led_8; }
+    bool is_srch_led_4() const { return sts.b_srch_led_4; }
+    bool is_srch_led_2() const { return sts.b_srch_led_2; }
+    bool is_srch_led_1() const { return sts.b_srch_led_1; }
+    // byte 7
+    bool is_aud_split() const { return sts.b_aud_split; }
+    bool is_syn_act() const { return sts.b_sync_act; }
+    bool is_spot_erase() const { return sts.b_spot_erase; }
+    bool is_in_out() const { return sts.b_in_out; }
+    // byte 8
+    bool is_buzzer() const { return sts.b_buzzer; }
+    bool is_lost_lock() const { return sts.b_lost_lock; }
     bool is_near_eot() const { return sts.b_near_eot; }  // set if total space left on available SSDs is less than 3 minutes
     bool is_eot() const { return sts.b_eot; }            // set if total space left on available SSDs is less than 30 seconds
+    bool is_cf_lock() const { return sts.b_cf_lock; }
+    bool is_svo_alarm() const { return sts.b_svo_alarm; }
+    bool is_sys_alarm() const { return sts.b_sys_alarm; }
+    bool is_rec_inhib() const { return sts.b_rec_inhib; }
+    // byte 9
+    bool is_fnc_abort() const { return sts.b_fnc_abort; }
 
     // =============== Utilities ===============
 

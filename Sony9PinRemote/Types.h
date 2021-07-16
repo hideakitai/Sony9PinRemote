@@ -555,9 +555,9 @@ namespace CurrentTimeSenseFlag {
 }
 
 enum class TimerMode : uint8_t {
-    TIME_CODE,
-    CTL_COUNTER,
-    NA,
+    TIME_CODE = 0x00,
+    CTL_COUNTER = 0x01,
+    NA = 0xFF,
 };
 
 }  // namespace sony9pin

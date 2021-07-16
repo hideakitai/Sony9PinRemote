@@ -272,9 +272,9 @@ public:
     // Returns: 10 01 11
     // Send: 24 24 36 52 21 F1 (Cue to 21 hours, 52 minutes, 36 seconds, 24 frames)
     // Returns: 10 01 11
-    Packet cue_up_with_data(const uint8_t hours, const uint8_t minutes, const uint8_t seconds, const uint8_t frames) {
+    Packet cue_up_with_data(const uint8_t hh, const uint8_t mm, const uint8_t ss, const uint8_t ff) {
         Serial.print(__func__);
-        return encode(Cmd1::TRANSPORT_CONTROL, TransportCtrl::CUE_UP_WITH_DATA, frames, seconds, minutes, hours);
+        return encode(Cmd1::TRANSPORT_CONTROL, TransportCtrl::CUE_UP_WITH_DATA, ff, ss, mm, hh);
     }
 
     // 20.34 Sync Play
@@ -470,11 +470,14 @@ public:
     // 0 OFF 1 ON
     // Send: 44 00 00 10 20 01 75 (CTL counter set to 1 hour, 20 minutes, 10 seconds, 0 frames)
     // Returns: 10 01 11
-    Packet timer_1_preset(const uint8_t hours, const uint8_t minutes, const uint8_t seconds, const uint8_t frames) {
+    Packet timer_1_preset(const uint8_t hh, const uint8_t mm, const uint8_t ss, const uint8_t ff, const bool is_df) {
         Serial.print(__func__);
-        // TODO: need to convert to BCD(Binary Coded Decimal)?
-        // TODO: Drop or Non-Drop
-        return encode(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::TIMER_1_PRESET, frames, seconds, minutes, hours);
+        const uint8_t h = from_dec_to_bcd(hh);
+        const uint8_t m = from_dec_to_bcd(mm);
+        const uint8_t s = from_dec_to_bcd(ss);
+        uint8_t f = from_dec_to_bcd(ff);
+        f |= (uint8_t)is_df << 6;  // 0: non-drop, 1: drop
+        return encode(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::TIMER_1_PRESET, f, s, m, h);
     }
 
     // 44.04 TIME CODE PRESET
@@ -486,11 +489,14 @@ public:
     // 0 OFF 1 ON
     // Send: 44 04 00 15 30 00 75 (Preset TC set to 30 minutes, 15 seconds, 0 frames)
     // Returns: 10 01 11
-    Packet time_code_preset(const uint8_t hours, const uint8_t minutes, const uint8_t seconds, const uint8_t frames) {
+    Packet time_code_preset(const uint8_t hh, const uint8_t mm, const uint8_t ss, const uint8_t ff, const bool is_df) {
         Serial.print(__func__);
-        // TODO: need to convert to BCD(Binary Coded Decimal)?
-        // TODO: Drop or Non-Drop
-        return encode(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::TIME_CODE_PRESET, frames, seconds, minutes, hours);
+        const uint8_t h = from_dec_to_bcd(hh);
+        const uint8_t m = from_dec_to_bcd(mm);
+        const uint8_t s = from_dec_to_bcd(ss);
+        uint8_t f = from_dec_to_bcd(ff);
+        f |= (uint8_t)is_df << 6;  // 0: non-drop, 1: drop
+        return encode(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::TIME_CODE_PRESET, f, s, m, h);
     }
 
     // 44.05 USER-BIT PRESET
@@ -500,7 +506,6 @@ public:
     // Returns: 10 01 11
     Packet user_bit_preset(const uint8_t data1, const uint8_t data2, const uint8_t data3, const uint8_t data4) {
         Serial.print(__func__);
-        // TODO: more user-friendly arguments?
         return encode(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::USER_BIT_PRESET, data1, data2, data3, data4);
     }
 
@@ -558,10 +563,14 @@ public:
     // See the CUE UP WITH DATA command for the data format.
     // Send: 44 14 21 16 25 04 68 (Set in point to 4 hours, 25 minutes, 16 seconds, 21 frames)
     // Returns: 10 01 11
-    Packet in_data_preset(const uint8_t hours, const uint8_t minutes, const uint8_t seconds, const uint8_t frames) {
+    Packet in_data_preset(const uint8_t hh, const uint8_t mm, const uint8_t ss, const uint8_t ff) {
         Serial.print(__func__);
-        // TODO: need to convert to BCD(Binary Coded Decimal)?
-        return encode(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::IN_DATA_PRESET, frames, seconds, minutes, hours);
+        const uint8_t h = from_dec_to_bcd(hh);
+        const uint8_t m = from_dec_to_bcd(mm);
+        const uint8_t s = from_dec_to_bcd(ss);
+        const uint8_t f = from_dec_to_bcd(ff);
+        // f |= (uint8_t)is_df << 6;  // 0: non-drop, 1: drop
+        return encode(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::IN_DATA_PRESET, f, s, m, h);
     }
 
     // 44.15 OUT PRESET
@@ -569,10 +578,14 @@ public:
     // See the CUE UP WITH DATA command for the data format.
     // Send: 44 15 05 09 27 04 92 (Set out point to 4 hours, 27 minutes, 9 seconds, 5 frames)
     // Returns: 10 01 11
-    Packet out_data_preset(const uint8_t hours, const uint8_t minutes, const uint8_t seconds, const uint8_t frames) {
+    Packet out_data_preset(const uint8_t hh, const uint8_t mm, const uint8_t ss, const uint8_t ff) {
         Serial.print(__func__);
-        // TODO: need to convert to BCD(Binary Coded Decimal)?
-        return encode(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::OUT_DATA_PRESET, frames, seconds, minutes, hours);
+        const uint8_t h = from_dec_to_bcd(hh);
+        const uint8_t m = from_dec_to_bcd(mm);
+        const uint8_t s = from_dec_to_bcd(ss);
+        const uint8_t f = from_dec_to_bcd(ff);
+        // f |= (uint8_t)is_df << 6;  // 0: non-drop, 1: drop
+        return encode(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::OUT_DATA_PRESET, f, s, m, h);
     }
 
     // 4?.16 Audio In Data Preset
@@ -769,10 +782,14 @@ public:
     // For the data format, refer to the CUE UP WITH DATA command.
     // Send: 44 31 00 05 00 00 7A (Set the pre-roll duration to 5 seconds)
     // Returns: 10 01 11
-    Packet preroll_preset(const uint8_t hours, const uint8_t minutes, const uint8_t seconds, const uint8_t frames) {
+    Packet preroll_preset(const uint8_t hh, const uint8_t mm, const uint8_t ss, const uint8_t ff) {
         Serial.print(__func__);
-        // TODO: need to convert to BCD(Binary Coded Decimal)?
-        return encode(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::PREROLL_PRESET, frames, seconds, minutes, hours);
+        const uint8_t h = from_dec_to_bcd(hh);
+        const uint8_t m = from_dec_to_bcd(mm);
+        const uint8_t s = from_dec_to_bcd(ss);
+        const uint8_t f = from_dec_to_bcd(ff);
+        // f |= (uint8_t)is_df << 6;  // 0: non-drop, 1: drop
+        return encode(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::PREROLL_PRESET, f, s, m, h);
     }
 
     // 41.32 Tape/Audio Select
@@ -816,10 +833,9 @@ public:
     //   FF : device setting dependent.
     // Send: 41 36 11 88 (Set the device to time code head)
     // Returns: 10 01 11
-    Packet timer_mode_select(const uint8_t v) {
+    Packet timer_mode_select(const TimerMode tm) {
         Serial.print(__func__);
-        // TODO: more user-friendly arguments?
-        return encode(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::TIMER_MODE_SELECT, v);
+        return encode(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::TIMER_MODE_SELECT, (uint8_t)tm);
     }
 
     // 41.37 Input Check
@@ -1383,6 +1399,12 @@ private:
         Serial.print((uint8_t)cmd2, HEX);
         Serial.print(" ");
         return encode(packet, crc, util::forward<Args>(args)...);
+    }
+
+    template <typename T>
+    inline auto from_dec_to_bcd(const T& n)
+        -> typename std::enable_if<std::is_integral<T>::value, size_t>::type {
+        return n + 6 * (n / 10);
     }
 };
 
