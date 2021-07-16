@@ -8,181 +8,11 @@
 
 namespace sony9pin {
 
-// Common Constants
+// =============== Common Constants ===============
+
 static constexpr uint8_t MAX_PACKET_SIZE {15 + 3};
 
-// Data Structs for Decoder
-
-struct Errors {
-    bool b_unknown_cmd;
-    bool b_checksum_error;
-    bool b_parity_error;
-    bool b_buffer_overrun;
-    bool b_framing_error;
-    bool b_timeout;
-};
-
-struct Status {
-    // byte 0
-    bool b_cassette_out;       // set if no ssd is present
-    bool b_servo_ref_missing;  // set if servo reference is absent
-    bool b_local;              // set if remote is disabled (local control)
-    // byte 1
-    bool b_standby;  // set if a disk is available
-    bool b_stop;     // When the machine is in full stop, this is 1. The thread state depends on the tape/ee and standby settings.
-    bool b_eject;    // When the tape is ejecting this is 1.
-    bool b_rewind;   // When the machine is in fast reverse this is 1.
-    bool b_forward;  // When the machine is in fast forward this is 1.
-    bool b_record;   // This bit goes from 0 to 1 some number of frames after the machine starts recording. For the DVR2000 we measured 5 frames. Others have varying delays on the record status.
-    bool b_play;     // This bit goes from 0 to 1 some number of frames after the machine starts playing. For the DVR2000 we measured 5 frames. Others have varying delays on the play status.
-    // byte 2
-    bool b_servo_lock;  // 1 indicates servos are locked. This is a necessary condition for an edit to occur correctly.
-    bool b_tso_mode;    // Bit is 1 in tape speed override: in this mode, audio and video are still locked though speed is off play speed by +/- up to 15%.
-    bool b_shuttle;
-    bool b_jog;
-    bool b_var;
-    bool b_direction;  // clear if playback is forwarding〝set if playback is reversing
-    bool b_still;      // set if playback is paused, or if in input preview mode
-    bool b_cue_up;
-    // byte 3
-    bool b_auto_mode;  // set if in Auto Mode
-    bool b_freeze_on;
-    bool b_cf_mode;
-    bool b_audio_out_set;
-    bool b_audio_in_set;
-    bool b_out_set;
-    bool b_in_set;
-    // byte 4
-    bool b_select_ee;  // set if in input preview mode
-    bool b_full_ee;
-    bool b_edit;
-    bool b_review;
-    bool b_auto_edit;
-    bool b_preview;
-    bool b_preroll;
-    // byte 5
-    bool b_insert;
-    bool b_assemble;
-    bool b_video;
-    bool b_a4;
-    bool b_a3;
-    bool b_a2;
-    bool b_a1;
-    // byte 6
-    bool b_lamp_still;  // set according to playback speed and direction
-    bool b_lamp_fwd;
-    bool b_lamp_rev;
-    bool b_srch_led_8;
-    bool b_srch_led_4;
-    bool b_srch_led_2;
-    bool b_srch_led_1;
-    // byte 7
-    bool b_aud_split;
-    bool b_sync_act;
-    bool b_spot_erase;
-    bool b_in_out;
-    // byte 8
-    bool b_buzzer;
-    bool b_lost_lock;
-    bool b_near_eot;  // set if total space left on available SSDs is less than 3 minutes
-    bool b_eot;       // set if total space left on available SSDs is less than 30 seconds
-    bool b_cf_lock;
-    bool b_svo_alarm;
-    bool b_sys_alarm;
-    bool b_rec_inhib;
-    // byte 9
-    bool b_fnc_abort;
-};
-
-// DATA-0
-// BIT-0 LOCAL
-// This bit will be set to 1 when the device will only accept commands from the controller, and not the panel.
-// BIT-2 HARDWARE ERROR
-// This bit will be set to 1 when a hardware error occurs in the device.
-// BIT-5 CASSETTE OUT
-// The removable media is not present in the device.
-//
-// DATA-1
-// BIT-0 PLAY
-// This bit will be set to 1 when the device goes into the PLAY, REC or EDIT mode, or the device is in the CAPSTAN OVERRIDE mode.
-// BIT-1 RECORD
-// This bit will be set to 1 when the device goes into the REC mode, or when the DATA-4/BIT-4 : EDIT is set to 1.
-// BIT-2 FAST FORWARD
-// This bit will be set to 1 when the device goes into the FAST FORWARD mode.
-// BIT-3 REWIND
-// This bit will be set to 1 when the device goes into the FAST REVERSE mode.
-// BIT-4 EJECT
-// This bit will be set to 1 when the device ejects its media.
-// BIT-5 STOP
-// This bit will be set to 1 when the device is in stop mode.
-// BIT-6 TENSION RELEASE
-// This bit will be set to 1 when the device is in idle mode.
-// BIT-6 STANDBY ON
-// This bit will be set to 1 when the device is in standby mode.
-//
-// DATA-2
-// BIT-0 CUE UP COMPLETE
-// This bit will be set to 1 when the device completes a CUE UP WITH DATA command and the material is at the requested position.
-// BIT-1 STILL
-// This bit will be set to 1 when the device is stopped and displays the current frame of media.
-// BIT-2 REVERSE/FORWARD
-// This bit will be set to 1 when the device is outputting its material in reverse of the normal order. When moving in the normal direction, it will be 0.
-// BIT-3 VAR MODE
-// This bit will be set to 1 when the device goes into the VAR command mode.
-// BIT-4 JOG MODE
-// This bit will be set to 1 when the device goes into the JOG command mode.
-// BIT-5 SHUTTLE MODE
-// This bit will be set to 1 when the device goes into the SHUTTLE command mode.
-// BIT-7 SERVO LOCK
-// This bit will be set to 1 when the playback or record is servo locked with the input or reference sync.
-//
-// DATA-3
-// BIT-0 IN
-// Set to 1 if an in point has been set.
-// BIT-1 OUT
-// Set to 1 if an out point has been set.
-// BIT-7 AUTO MODE
-// Set to 1 if the device has been placed in AUTO mode.
-//
-// DATA-4
-// BIT-0 PRE-ROLL OR CUE UP COMPLETE
-// This bit will be set to 1 when the device goes into the PRE-ROLL and CUE-UP modes (a PRE-ROLL is also performed in the auto-edit, preview and review modes).
-// BIT-1 REVIEW
-// This bit will be set to 1 when the device is in REVIEW mode.
-// BIT-2 AUTO EDIT
-// This bit will be set to 1 when the device is preform an AUTO EDIT.
-// BIT-3 PREVIEW
-// This bit will be set to 1 when the device is in the PREVIEW mode.
-// BIT-4 EDIT MODE
-// Both the bit and the DATA-1/BIT-1 : REC will be set to 1 when the device is in EDIT mode (between EDIT ON and EDIT OFF or AUTO EDIT between the in and out points).
-// BIT-6 FULL EE ON
-// This bit will be set to 1 when the device is in full edit to edit mode.
-// BIT-7 SELECTED EE
-// This bit will be set to 1 when the device is in 'Selected Edit To Edit' mode.
-//
-// DATA-6 (Not supported on most devices)
-// BIT-4 LAMP REVERSE
-// This bit will be set to 1 when the device is searching backwards.
-// BIT-5 LAMP FORWARD
-// This bit will be set to 1 when the device is searching forwards.
-// BIT-4 LAMP STILL
-// This bit will be set to 1 when the device has finished searching.
-//
-// DATA-7
-// BIT-0 IN-OUT STATUS
-// This bit will be set to 1 in the device PREVIEW or AUTO EDIT mode and the material is running between the in point and out point.
-// BIT-4 SYNC ACTIVE
-// This bit will be set to 1 in the device sensing valid sync on the device's input.
-//
-// DATA-8
-// BIT-0 RECORD INHIBIT
-// If this bit is set to 1, record/edit commands will be ignored.
-// BIT-4 END OF TAPE
-// Set to 1 if the device has reached the end of its media.
-// BIT-5 NEAR END
-// Set to 1 if the device is near the end of its media.
-
-// Cmd1 Lists
+// =============== Cmd1 Lists ===============
 
 enum class Cmd1 : uint8_t {
     SYSTEM_CONTROL = 0x00,            // ---> device
@@ -196,9 +26,9 @@ enum class Cmd1 : uint8_t {
     NA = 0xFF
 };
 
-// Cmd2 lists based on Cmd1
+// =============== Cmd2 lists  ===============
 
-// 0 - System Control
+// ===== 0 - System Control =====
 namespace SystemCtrl {
     enum : uint8_t {
         LOCAL_DISABLE = 0x0C,
@@ -209,7 +39,7 @@ namespace SystemCtrl {
     };
 }
 
-// 1 - System Control Return
+// ===== 1 - System Control Return =====
 namespace SystemControlReturn {
     enum : uint8_t {
         ACK = 0x01,          // auto parse
@@ -218,7 +48,7 @@ namespace SystemControlReturn {
     };
 }
 
-// 2 - Transport Control
+// ===== 2 - Transport Control =====
 namespace TransportCtrl {
     enum : uint8_t {
         STOP = 0x00,
@@ -263,7 +93,7 @@ namespace TransportCtrl {
     };
 }
 
-// 4 - Preset/Select Control
+// ===== 4 - Preset/Select Control =====
 namespace PresetSelectCtrl {
     enum : uint8_t {
         TIMER_1_PRESET = 0x00,
@@ -330,7 +160,7 @@ namespace PresetSelectCtrl {
     };
 }
 
-// 6 - Sense Request
+// ===== 6 - Sense Request =====
 namespace SenseRequest {
     enum : uint8_t {
         TC_GEN_SENSE = 0x0A,
@@ -357,7 +187,7 @@ namespace SenseRequest {
     };
 }
 
-// 7 - Sense Reply
+// ===== 7 - Sense Reply =====
 namespace SenseReturn {
     enum : uint8_t {
         TIMER_1 = 0x00,
@@ -399,14 +229,14 @@ namespace SenseReturn {
     };
 }
 
-// 8 - BlackMagic Extensions
+// ===== 8 - BlackMagic Extensions =====
 namespace BmdExtensions {
     enum : uint8_t {
         SEEK_RELATIVE_CLIP = 0x03,
     };
 }
 
-// A - BlackMagic Advanced Media Protocol
+// ===== A - BlackMagic Advanced Media Protocol =====
 namespace BmdAdvancedMediaProtocol {
     enum : uint8_t {
         AUTO_SKIP = 0x01,
@@ -414,7 +244,7 @@ namespace BmdAdvancedMediaProtocol {
     };
 }
 
-// Bit Masks
+// =============== Bit Masks ===============
 
 namespace HeaderMask {
     enum : uint8_t {
@@ -510,6 +340,92 @@ namespace StatusMask {
     };
 }
 
+// =============== Data Structs for Decoder ===============
+
+struct Errors {
+    bool b_unknown_cmd;
+    bool b_checksum_error;
+    bool b_parity_error;
+    bool b_buffer_overrun;
+    bool b_framing_error;
+    bool b_timeout;
+};
+
+struct Status {
+    // byte 0
+    bool b_cassette_out;       // set if no ssd is present
+    bool b_servo_ref_missing;  // set if servo reference is absent
+    bool b_local;              // set if remote is disabled (local control)
+    // byte 1
+    bool b_standby;  // set if a disk is available
+    bool b_stop;     // When the machine is in full stop, this is 1. The thread state depends on the tape/ee and standby settings.
+    bool b_eject;    // When the tape is ejecting this is 1.
+    bool b_rewind;   // When the machine is in fast reverse this is 1.
+    bool b_forward;  // When the machine is in fast forward this is 1.
+    bool b_record;   // This bit goes from 0 to 1 some number of frames after the machine starts recording. For the DVR2000 we measured 5 frames. Others have varying delays on the record status.
+    bool b_play;     // This bit goes from 0 to 1 some number of frames after the machine starts playing. For the DVR2000 we measured 5 frames. Others have varying delays on the play status.
+    // byte 2
+    bool b_servo_lock;  // 1 indicates servos are locked. This is a necessary condition for an edit to occur correctly.
+    bool b_tso_mode;    // Bit is 1 in tape speed override: in this mode, audio and video are still locked though speed is off play speed by +/- up to 15%.
+    bool b_shuttle;
+    bool b_jog;
+    bool b_var;
+    bool b_direction;  // clear if playback is forwarding〝set if playback is reversing
+    bool b_still;      // set if playback is paused, or if in input preview mode
+    bool b_cue_up;
+    // byte 3
+    bool b_auto_mode;  // set if in Auto Mode
+    bool b_freeze_on;
+    bool b_cf_mode;
+    bool b_audio_out_set;
+    bool b_audio_in_set;
+    bool b_out_set;
+    bool b_in_set;
+    // byte 4
+    bool b_select_ee;  // set if in input preview mode
+    bool b_full_ee;
+    bool b_edit;
+    bool b_review;
+    bool b_auto_edit;
+    bool b_preview;
+    bool b_preroll;
+    // byte 5
+    bool b_insert;
+    bool b_assemble;
+    bool b_video;
+    bool b_a4;
+    bool b_a3;
+    bool b_a2;
+    bool b_a1;
+    // byte 6
+    bool b_lamp_still;  // set according to playback speed and direction
+    bool b_lamp_fwd;
+    bool b_lamp_rev;
+    bool b_srch_led_8;
+    bool b_srch_led_4;
+    bool b_srch_led_2;
+    bool b_srch_led_1;
+    // byte 7
+    bool b_aud_split;
+    bool b_sync_act;
+    bool b_spot_erase;
+    bool b_in_out;
+    // byte 8
+    bool b_buzzer;
+    bool b_lost_lock;
+    bool b_near_eot;  // set if total space left on available SSDs is less than 3 minutes
+    bool b_eot;       // set if total space left on available SSDs is less than 30 seconds
+    bool b_cf_lock;
+    bool b_svo_alarm;
+    bool b_sys_alarm;
+    bool b_rec_inhib;
+    // byte 9
+    bool b_fnc_abort;
+};
+
+// =============== Mode / Flag Structs ===============
+
+// 12.11 DEVICE TYPE
 namespace DeviceType {
     enum : uint16_t {
         BLACKMAGIC_HYPERDECK_STUDIO_MINI_NTSC = 0xF0E0,
@@ -518,21 +434,12 @@ namespace DeviceType {
     };
 }
 
-namespace LoopMode {
-    enum : uint8_t {
-        SINGLE_CLIP,
-        TIMELINE
-    };
-}
-
-namespace StopMode {
-    enum : uint8_t {
-        OFF,
-        FREEZE_ON_LAST_FRAME,
-        FREEZE_ON_NEXT_CLIP,
-        SHOW_BLACK
-    };
-}
+// 41.36 TIMER MODE SELECT
+enum class TimerMode : uint8_t {
+    TIME_CODE = 0x00,
+    CTL_COUNTER = 0x01,
+    NA = 0xFF,
+};
 
 // 61.0A TC Generator Data Types
 namespace TcGenData {
@@ -543,6 +450,7 @@ namespace TcGenData {
     };
 }
 
+// 61.0C CURRENT TIME
 namespace CurrentTimeSenseFlag {
     enum : uint8_t {
         LTC_TIME = 0x01,
@@ -554,11 +462,23 @@ namespace CurrentTimeSenseFlag {
     };
 }
 
-enum class TimerMode : uint8_t {
-    TIME_CODE = 0x00,
-    CTL_COUNTER = 0x01,
-    NA = 0xFF,
-};
+// 41.42 SetPlaybackLoop (BlackMagiconly)
+namespace LoopMode {
+    enum : uint8_t {
+        SINGLE_CLIP,
+        TIMELINE
+    };
+}
+
+// 41.44 SetStopMode (BlackMagic only)
+namespace StopMode {
+    enum : uint8_t {
+        OFF,
+        FREEZE_ON_LAST_FRAME,
+        FREEZE_ON_NEXT_CLIP,
+        SHOW_BLACK
+    };
+}
 
 }  // namespace sony9pin
 

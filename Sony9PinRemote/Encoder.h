@@ -1289,7 +1289,7 @@ public:
 
     // =============== A - BlackMagic Advanced Media Protocol ===============
 
-    // DESCRIPTION:
+    // 08.02 BmdSeekToTimelinePosition
     // 16-bit little endian fractional position [0..65535]
     // REPLY: ACK
     Packet bmd_seek_to_timeline_pos(const uint8_t data1, const uint8_t data2) {
@@ -1298,7 +1298,7 @@ public:
         return encode(Cmd1::SYSTEM_CONTROL, SystemCtrl::BMD_SEEK_TO_TIMELINE_POS, data1, data2);
     }
 
-    // DESCRIPTION:
+    // 20.29 ClearPlaylist
     // UNKNOWN
     // REPLY: ACK
     Packet clear_playlist() {
@@ -1306,7 +1306,7 @@ public:
         return encode(Cmd1::TRANSPORT_CONTROL, TransportCtrl::CLEAR_PLAYLIST);
     }
 
-    // DESCRIPTION:
+    // 4F.16 AppendPreset
     // 2 Bytes for the length N of the clip name
     // N Bytes for each character of the clip name
     // 4 Byte in point timecode (format is FFSSMMHH)
@@ -1320,7 +1320,7 @@ public:
         return Packet();
     }
 
-    // DESCRIPTION:
+    // 41.42 SetPlaybackLoop
     // Bit0 loop mode enable, 0 = false, 1 = true
     // Bit1 is single clip/timeline, 0 = single clip, 1 = timeline
     // REPLY: ACK
@@ -1330,7 +1330,7 @@ public:
         return encode(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::SET_PLAYBACK_LOOP, v);
     }
 
-    // DESCRIPTION:
+    // 41.44 SetStopMode
     // 0 = Off
     // 1 = Freeze on last frame of Timeline (not clip)
     // 2 = Freeze on next clip of Timeline (not clip)
@@ -1341,7 +1341,7 @@ public:
         return encode(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::SET_STOP_MODE, stop_mode);
     }
 
-    // DESCRIPTION:
+    // 81.03 BmdSeekRelativeClip
     // One-byte signed integer, which is the number of clips to skip (negative for backwards).
     // REPLY: ACK
     Packet bmd_seek_relative_clip(const int8_t index) {
@@ -1349,7 +1349,7 @@ public:
         return encode(Cmd1::BMD_EXTENSION, BmdExtensions::SEEK_RELATIVE_CLIP, index);
     }
 
-    // DESCRIPTION:
+    // A1.01 AutoSkip
     // 8-bit signed number of clips to skip from current clip
     // REPLY: ACK
     Packet auto_skip(const int8_t n) {
@@ -1357,7 +1357,7 @@ public:
         return encode(Cmd1::BMD_ADVANCED_MEDIA_PRTCL, BmdAdvancedMediaProtocol::AUTO_SKIP, (uint8_t)n);
     }
 
-    // DESCRIPTION:
+    // AX.15 ListNextID
     // when x = 0, single clip request
     // when x = 1, # clips can be specified in the encode data
     // REPLY: IDListing
