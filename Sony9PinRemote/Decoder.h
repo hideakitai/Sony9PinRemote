@@ -233,11 +233,36 @@ public:
     // When the device receives the CURRENT TIME SENSE 61.0C command, and has been set to
     // the CG mode, the device will be set to 1.
 
+    /// Generic response for timecode + userbits without packet check
+    TimeCodeAndUserBits timecode_userbits() const {
+        TimeCodeAndUserBits tcub;
+        decode_to_timecode(tcub.tc);
+        decode_to_userbits(tcub.ub);
+        return tcub;
+    }
+    TimeCode timecode() const {
+        TimeCode tc;
+        decode_to_timecode(tc);
+        return tc;
+    }
+    UserBits userbits() const {
+        UserBits ub;
+        decode_to_userbits(ub);
+        return ub;
+    }
+
     // 74.00 TIMER-1
     // Returned with the CTL counter data. At this time, the BIT-6 of DATA-1 is DATA set to 1,
     // and 0, when the device CTL counter is set to DF/NDF mode. For the data format,
     // refer to the CUE UP WITH DATA command.
-    TimeCode timer_1() const {
+    TimeCodeAndUserBits timer1_tc_ub() const {
+        TimeCodeAndUserBits tcub;
+        SONY9PIN_RESPONSE_CHECK(Cmd1::SENSE_RETURN, SenseReturn::TIMER_1, 8, tcub);
+        decode_to_timecode(tcub.tc);
+        decode_to_userbits(tcub.ub);
+        return tcub;
+    }
+    TimeCode timer1_tc() const {
         TimeCode tc;
         SONY9PIN_RESPONSE_CHECK(Cmd1::SENSE_RETURN, SenseReturn::TIMER_1, 4, tc);
         decode_to_timecode(tc);
@@ -248,7 +273,14 @@ public:
     // Returned with the CTL counter data. At this time, the BIT-6 of DATA-1 is DATA set to 1,
     // and 0, when the device CTL counter is set to DF/NDF mode. For the data format,
     // refer to the CUE UP WITH DATA command.
-    TimeCode timer_2() const {
+    TimeCodeAndUserBits timer2_tc_ub() const {
+        TimeCodeAndUserBits tcub;
+        SONY9PIN_RESPONSE_CHECK(Cmd1::SENSE_RETURN, SenseReturn::TIMER_2, 8, tcub);
+        decode_to_timecode(tcub.tc);
+        decode_to_userbits(tcub.ub);
+        return tcub;
+    }
+    TimeCode timer2_tc() const {
         TimeCode tc;
         SONY9PIN_RESPONSE_CHECK(Cmd1::SENSE_RETURN, SenseReturn::TIMER_2, 4, tc);
         decode_to_timecode(tc);

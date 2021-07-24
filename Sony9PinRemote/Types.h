@@ -423,6 +423,25 @@ struct Status {
     bool b_fnc_abort;
 };
 
+struct TimeCode {
+    uint8_t frame {0};
+    uint8_t second {0};
+    uint8_t minute {0};
+    uint8_t hour {0};
+    bool is_cf {false};
+    bool is_df {false};
+};
+
+union UserBits {
+    uint8_t bytes[4];
+    uint32_t i;
+};
+
+struct TimeCodeAndUserBits {
+    TimeCode tc;
+    UserBits ub;
+};
+
 // =============== Mode / Flag Structs ===============
 
 // 12.11 DEVICE TYPE
@@ -453,8 +472,8 @@ namespace TcGenData {
 // 61.0C CURRENT TIME
 namespace CurrentTimeSenseFlag {
     enum : uint8_t {
-        LTC_TIME = 0x01,
-        VITC_TIME = 0x02,
+        LTC_TC = 0x01,
+        VITC_TC = 0x02,
         TIMER_1 = 0x04,
         TIMER_2 = 0x08,
         LTC_UB = 0x10,

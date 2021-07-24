@@ -680,6 +680,51 @@ public:
         auto packet = encoder.current_time_sense(data1);
         SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
+    void current_time_sense_timer1() {
+        using namespace CurrentTimeSenseFlag;
+        current_time_sense(TIMER_1);
+    }
+    void current_time_sense_timer2() {
+        using namespace CurrentTimeSenseFlag;
+        current_time_sense(TIMER_2);
+    }
+    void current_time_sense_ltc_tc_ub() {
+        using namespace CurrentTimeSenseFlag;
+        current_time_sense(LTC_UB | LTC_TC);
+    }
+    void current_time_sense_ltc_tc() {
+        using namespace CurrentTimeSenseFlag;
+        current_time_sense(LTC_TC);
+    }
+    void current_time_sense_ltc_ub() {
+        using namespace CurrentTimeSenseFlag;
+        current_time_sense(LTC_UB);
+    }
+    void current_time_sense_vitc_tc_ub() {
+        using namespace CurrentTimeSenseFlag;
+        current_time_sense(VITC_UB | VITC_TC);
+    }
+    void current_time_sense_vitc_tc() {
+        using namespace CurrentTimeSenseFlag;
+        current_time_sense(VITC_TC);
+    }
+    void current_time_sense_vitc_ub() {
+        using namespace CurrentTimeSenseFlag;
+        current_time_sense(VITC_UB);
+    }
+    // TODO: should confirm if ltc interpolated flag, currently same as LTC
+    void current_time_sense_ltc_interpolated_tc_ub() {
+        using namespace CurrentTimeSenseFlag;
+        current_time_sense(LTC_UB | LTC_TC);
+    }
+    void current_time_sense_ltc_interpolated_tc() {
+        using namespace CurrentTimeSenseFlag;
+        current_time_sense(LTC_TC);
+    }
+    void current_time_sense_ltc_interpolated_ub() {
+        using namespace CurrentTimeSenseFlag;
+        current_time_sense(LTC_UB);
+    }
 
     void in_data_sense() {
         auto packet = encoder.in_data_sense();
@@ -832,14 +877,21 @@ public:
 
     // =============== 7 - Sense Return ===============
 
-    // Responses to 61.0A Gen Time Sense
+    // Generic timecode/userbits response without packet check
+    TimeCodeAndUserBits timecode_userbits() const { return decoder.timecode_userbits(); }
+    TimeCode timecode() const { return decoder.timecode(); }
+    UserBits userbits() const { return decoder.userbits(); }
+
+    // Responses to 61.0A Gen Time Sense (with packet check)
     TimeCodeAndUserBits gen_tc_ub() const { return decoder.gen_tc_ub(); }
     TimeCode gen_tc() const { return decoder.gen_tc(); }
     UserBits gen_ub() const { return decoder.gen_ub(); }
 
-    // Responses to 61.0C Current Time Sense
-    TimeCode timer_1() const { return decoder.timer_1(); }
-    TimeCode timer_2() const { return decoder.timer_2(); }
+    // Responses to 61.0C Current Time Sense (with packet check)
+    TimeCodeAndUserBits timer1_tc_ub() const { return decoder.timer1_tc_ub(); }
+    TimeCode timer1_tc() const { return decoder.timer1_tc(); }
+    TimeCodeAndUserBits timer2_tc_ub() const { return decoder.timer2_tc_ub(); }
+    TimeCode timer2_tc() const { return decoder.timer2_tc(); }
     TimeCodeAndUserBits ltc_tc_ub() const { return decoder.ltc_tc_ub(); }
     TimeCode ltc_tc() const { return decoder.ltc_tc(); }
     UserBits ltc_ub() const { return decoder.ltc_ub(); }
@@ -859,6 +911,15 @@ public:
     Status status_sense() const { return decoder.status_sense(status_start, status_size); }
     TimeCode preroll_time() const { return decoder.preroll_time(); }
     TimerMode timer_mode() const { return decoder.timer_mode(); }
+
+    // =============== Nak Checker ===============
+
+    bool is_nak_unknown_command() const { return err.b_unknown_cmd; }
+    bool is_nak_checksum_error() const { return err.b_checksum_error; }
+    bool is_nak_parity_error() const { return err.b_parity_error; }
+    bool is_nak_buffer_overrun() const { return err.b_buffer_overrun; }
+    bool is_nak_framing_error() const { return err.b_framing_error; }
+    bool is_nak_timeout() const { return err.b_timeout; }
 
     // =============== Status Checker ===============
 
