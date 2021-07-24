@@ -996,87 +996,130 @@ public:
     // =============== Utilities ===============
 
     void print_nak() {
-        if (err.b_unknown_cmd) LOG_VERBOSE("Unknown Command");
-        if (err.b_checksum_error) LOG_VERBOSE("Checksum Error");
-        if (err.b_parity_error) LOG_VERBOSE("Parity Error");
-        if (err.b_buffer_overrun) LOG_VERBOSE("Buffer Overrun");
-        if (err.b_framing_error) LOG_VERBOSE("Framing Error");
-        if (err.b_timeout) LOG_VERBOSE("Timeout");
+        PRINTLN("<Nak Response>");
+        if (err.b_unknown_cmd) PRINTLN("Unknown Command");
+        if (err.b_checksum_error) PRINTLN("Checksum Error");
+        if (err.b_parity_error) PRINTLN("Parity Error");
+        if (err.b_buffer_overrun) PRINTLN("Buffer Overrun");
+        if (err.b_framing_error) PRINTLN("Framing Error");
+        if (err.b_timeout) PRINTLN("Timeout");
     }
 
     void print_status() {
-        LOG_VERBOSE("<Remote Status>");
-        LOG_VERBOSE("==================");
-        LOG_VERBOSE("------byte 0------");
-        LOG_VERBOSE("Cassette Out : ", sts.b_cassette_out);
-        LOG_VERBOSE("Servo Ref Mis: ", sts.b_servo_ref_missing);
-        LOG_VERBOSE("Local        : ", sts.b_local);
-        LOG_VERBOSE("------byte 1------");
-        LOG_VERBOSE("Standby      : ", sts.b_standby);
-        LOG_VERBOSE("Stop         : ", sts.b_stop);
-        LOG_VERBOSE("Eject        : ", sts.b_eject);
-        LOG_VERBOSE("Rewind       : ", sts.b_rewind);
-        LOG_VERBOSE("Forward      : ", sts.b_forward);
-        LOG_VERBOSE("Record       : ", sts.b_record);
-        LOG_VERBOSE("Play         : ", sts.b_play);
-        LOG_VERBOSE("------byte 2------");
-        LOG_VERBOSE("Servo Lock   : ", sts.b_servo_lock);
-        LOG_VERBOSE("TSO Mode     : ", sts.b_tso_mode);
-        LOG_VERBOSE("Shuttle      : ", sts.b_shuttle);
-        LOG_VERBOSE("Jog          : ", sts.b_jog);
-        LOG_VERBOSE("Var          : ", sts.b_var);
-        LOG_VERBOSE("Direction    : ", sts.b_direction);
-        LOG_VERBOSE("Still        : ", sts.b_still);
-        LOG_VERBOSE("Cue Up       : ", sts.b_cue_up);
-        LOG_VERBOSE("------byte 3------");
-        LOG_VERBOSE("Auto Mode    : ", sts.b_auto_mode);
-        LOG_VERBOSE("Freeze On    : ", sts.b_freeze_on);
-        LOG_VERBOSE("CF Mode      : ", sts.b_cf_mode);
-        LOG_VERBOSE("Audio Out Set: ", sts.b_audio_out_set);
-        LOG_VERBOSE("Audio In Set : ", sts.b_audio_in_set);
-        LOG_VERBOSE("Out Set      : ", sts.b_out_set);
-        LOG_VERBOSE("In Set       : ", sts.b_in_set);
-        LOG_VERBOSE("------byte 4------");
-        LOG_VERBOSE("Select EE    : ", sts.b_select_ee);
-        LOG_VERBOSE("Full EE      : ", sts.b_full_ee);
-        LOG_VERBOSE("Edit         : ", sts.b_edit);
-        LOG_VERBOSE("Review       : ", sts.b_review);
-        LOG_VERBOSE("Auto Edit    : ", sts.b_auto_edit);
-        LOG_VERBOSE("Preview      : ", sts.b_preview);
-        LOG_VERBOSE("Preroll      : ", sts.b_preroll);
-        LOG_VERBOSE("------byte 5------");
-        LOG_VERBOSE("Insert       : ", sts.b_insert);
-        LOG_VERBOSE("Assemble     : ", sts.b_assemble);
-        LOG_VERBOSE("Video        : ", sts.b_video);
-        LOG_VERBOSE("A4           : ", sts.b_a4);
-        LOG_VERBOSE("A3           : ", sts.b_a3);
-        LOG_VERBOSE("A2           : ", sts.b_a2);
-        LOG_VERBOSE("A1           : ", sts.b_a1);
-        LOG_VERBOSE("------byte 6------");
-        LOG_VERBOSE("Lamp Still   : ", sts.b_lamp_still);
-        LOG_VERBOSE("Lamp Fwd     : ", sts.b_lamp_fwd);
-        LOG_VERBOSE("Lamp Rev     : ", sts.b_lamp_rev);
-        LOG_VERBOSE("SRCH Led 8   : ", sts.b_srch_led_8);
-        LOG_VERBOSE("SRCH Led 4   : ", sts.b_srch_led_4);
-        LOG_VERBOSE("SRCH Led 2   : ", sts.b_srch_led_2);
-        LOG_VERBOSE("SRCH Led 1   : ", sts.b_srch_led_1);
-        LOG_VERBOSE("------byte 7------");
-        LOG_VERBOSE("AUD Split    : ", sts.b_aud_split);
-        LOG_VERBOSE("Sync Act     : ", sts.b_sync_act);
-        LOG_VERBOSE("Spot Erase   : ", sts.b_spot_erase);
-        LOG_VERBOSE("In Out       : ", sts.b_in_out);
-        LOG_VERBOSE("------byte 8------");
-        LOG_VERBOSE("Buzzer       : ", sts.b_buzzer);
-        LOG_VERBOSE("Lost Lock    : ", sts.b_lost_lock);
-        LOG_VERBOSE("Near EOT     : ", sts.b_near_eot);
-        LOG_VERBOSE("EOT          : ", sts.b_eot);
-        LOG_VERBOSE("CF Lock      : ", sts.b_cf_lock);
-        LOG_VERBOSE("SVO Alarm    : ", sts.b_svo_alarm);
-        LOG_VERBOSE("Sys Alarm    : ", sts.b_sys_alarm);
-        LOG_VERBOSE("Rec Inhibit  : ", sts.b_rec_inhib);
-        LOG_VERBOSE("------byte 9------");
-        LOG_VERBOSE("FNC Abort    : ", sts.b_fnc_abort);
-        LOG_VERBOSE("==================");
+        PRINTLN("<Remote Status>");
+        PRINTLN("==================");
+        PRINTLN("------byte 0------");
+        PRINTLN("Cassette Out : ", sts.b_cassette_out);
+        PRINTLN("Servo Ref Mis: ", sts.b_servo_ref_missing);
+        PRINTLN("Local        : ", sts.b_local);
+        PRINTLN("------byte 1------");
+        PRINTLN("Standby      : ", sts.b_standby);
+        PRINTLN("Stop         : ", sts.b_stop);
+        PRINTLN("Eject        : ", sts.b_eject);
+        PRINTLN("Rewind       : ", sts.b_rewind);
+        PRINTLN("Forward      : ", sts.b_forward);
+        PRINTLN("Record       : ", sts.b_record);
+        PRINTLN("Play         : ", sts.b_play);
+        PRINTLN("------byte 2------");
+        PRINTLN("Servo Lock   : ", sts.b_servo_lock);
+        PRINTLN("TSO Mode     : ", sts.b_tso_mode);
+        PRINTLN("Shuttle      : ", sts.b_shuttle);
+        PRINTLN("Jog          : ", sts.b_jog);
+        PRINTLN("Var          : ", sts.b_var);
+        PRINTLN("Direction    : ", sts.b_direction);
+        PRINTLN("Still        : ", sts.b_still);
+        PRINTLN("Cue Up       : ", sts.b_cue_up);
+        PRINTLN("------byte 3------");
+        PRINTLN("Auto Mode    : ", sts.b_auto_mode);
+        PRINTLN("Freeze On    : ", sts.b_freeze_on);
+        PRINTLN("CF Mode      : ", sts.b_cf_mode);
+        PRINTLN("Audio Out Set: ", sts.b_audio_out_set);
+        PRINTLN("Audio In Set : ", sts.b_audio_in_set);
+        PRINTLN("Out Set      : ", sts.b_out_set);
+        PRINTLN("In Set       : ", sts.b_in_set);
+        PRINTLN("------byte 4------");
+        PRINTLN("Select EE    : ", sts.b_select_ee);
+        PRINTLN("Full EE      : ", sts.b_full_ee);
+        PRINTLN("Edit         : ", sts.b_edit);
+        PRINTLN("Review       : ", sts.b_review);
+        PRINTLN("Auto Edit    : ", sts.b_auto_edit);
+        PRINTLN("Preview      : ", sts.b_preview);
+        PRINTLN("Preroll      : ", sts.b_preroll);
+        PRINTLN("------byte 5------");
+        PRINTLN("Insert       : ", sts.b_insert);
+        PRINTLN("Assemble     : ", sts.b_assemble);
+        PRINTLN("Video        : ", sts.b_video);
+        PRINTLN("A4           : ", sts.b_a4);
+        PRINTLN("A3           : ", sts.b_a3);
+        PRINTLN("A2           : ", sts.b_a2);
+        PRINTLN("A1           : ", sts.b_a1);
+        PRINTLN("------byte 6------");
+        PRINTLN("Lamp Still   : ", sts.b_lamp_still);
+        PRINTLN("Lamp Fwd     : ", sts.b_lamp_fwd);
+        PRINTLN("Lamp Rev     : ", sts.b_lamp_rev);
+        PRINTLN("SRCH Led 8   : ", sts.b_srch_led_8);
+        PRINTLN("SRCH Led 4   : ", sts.b_srch_led_4);
+        PRINTLN("SRCH Led 2   : ", sts.b_srch_led_2);
+        PRINTLN("SRCH Led 1   : ", sts.b_srch_led_1);
+        PRINTLN("------byte 7------");
+        PRINTLN("AUD Split    : ", sts.b_aud_split);
+        PRINTLN("Sync Act     : ", sts.b_sync_act);
+        PRINTLN("Spot Erase   : ", sts.b_spot_erase);
+        PRINTLN("In Out       : ", sts.b_in_out);
+        PRINTLN("------byte 8------");
+        PRINTLN("Buzzer       : ", sts.b_buzzer);
+        PRINTLN("Lost Lock    : ", sts.b_lost_lock);
+        PRINTLN("Near EOT     : ", sts.b_near_eot);
+        PRINTLN("EOT          : ", sts.b_eot);
+        PRINTLN("CF Lock      : ", sts.b_cf_lock);
+        PRINTLN("SVO Alarm    : ", sts.b_svo_alarm);
+        PRINTLN("Sys Alarm    : ", sts.b_sys_alarm);
+        PRINTLN("Rec Inhibit  : ", sts.b_rec_inhib);
+        PRINTLN("------byte 9------");
+        PRINTLN("FNC Abort    : ", sts.b_fnc_abort);
+        PRINTLN("==================");
+    }
+
+    void print_gen_tc_ub() const { print_timecode_userbits(gen_tc_ub()); }
+    void print_gen_tc() const { print_timecode(gen_tc()); }
+    void print_gen_ub() const { print_userbits(gen_ub()); }
+
+    void print_timecode_userbits() const { print_timecode_userbits(timecode_userbits()); }
+    void print_timecode() const { print_timecode(timecode()); }
+    void print_userbits() const { print_userbits(userbits()); }
+    void print_timer1_tc_ub() const { print_timecode_userbits(timer1_tc_ub()); }
+    void print_timer1_tc() const { print_timecode(timer1_tc()); }
+    void print_timer2_tc_ub() const { print_timecode_userbits(timer2_tc_ub()); }
+    void print_timer2_tc() const { print_timecode(timer2_tc()); }
+    void print_ltc_tc_ub() const { print_timecode_userbits(ltc_tc_ub()); }
+    void print_ltc_tc() const { print_timecode(ltc_tc()); }
+    void print_ltc_ub() const { print_userbits(ltc_ub()); }
+    void print_vitc_tc_ub() const { print_timecode_userbits(vitc_tc_ub()); }
+    void print_vitc_tc() const { print_timecode(vitc_tc()); }
+    void print_vitc_ub() const { print_userbits(vitc_ub()); }
+    void print_interpolated_ltc_tc_ub() const { print_timecode_userbits(ltc_interpolated_tc_ub()); }
+    void print_interpolated_ltc_tc() const { print_timecode(ltc_interpolated_tc()); }
+    void print_interpolated_ltc_ub() const { print_userbits(ltc_interpolated_ub()); }
+    void print_hold_vitc_tc_ub() const { print_timecode_userbits(hold_vitc_tc_ub()); }
+    void print_hold_vitc_tc() const { print_timecode(hold_vitc_tc()); }
+    void print_hold_vitc_ub() const { print_userbits(hold_vitc_ub()); }
+
+    void print_in_data() const { print_timecode(in_data()); }
+    void print_out_data() const { print_timecode(out_data()); }
+    void print_preroll_time() const { print_timecode(preroll_time()); }
+
+private:
+    void print_timecode_userbits(const TimeCodeAndUserBits& tcub) const {
+        print_timecode(tcub.tc);
+        print_userbits(tcub.ub);
+    }
+
+    void print_timecode(const TimeCode& tc) const {
+        PRINTLN("TimeCode:", (int)tc.hour, ":", (int)tc.minute, ":", (int)tc.second, ";", (int)tc.frame, ", CF:", (bool)tc.is_cf, "DF:", (bool)tc.is_df);
+    }
+
+    void print_userbits(const UserBits& ub) const {
+        PRINTLN("UserBits:", ub.bytes[0], ub.bytes[1], ub.bytes[2], ub.bytes[3]);
     }
 };
 
