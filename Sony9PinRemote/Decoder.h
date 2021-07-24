@@ -637,6 +637,12 @@ public:
     }
 
 private:
+    template <typename T>
+    inline auto from_bcd_to_dec(const T& n) const
+        -> typename std::enable_if<std::is_integral<T>::value, size_t>::type {
+        return n - 6 * (n >> 4);
+    };
+
     bool empty() const {
         return curr_size == 0;
     }
@@ -644,22 +650,16 @@ private:
     void decode_to_timecode(TimeCode& tc) const {
         tc.is_cf = buffer[2] & 0b10000000;
         tc.is_df = buffer[2] & 0b01000000;
-        tc.frame = (((buffer[2] & 0x30) >> 4) * 10) | (buffer[2] & 0x0F);
-        tc.second = (((buffer[3] & 0x70) >> 4) * 10) | (buffer[3] & 0x0F);
-        tc.minute = (((buffer[4] & 0x70) >> 4) * 10) | (buffer[4] & 0x0F);
-        tc.hour = (((buffer[5] & 0x30) >> 4) * 10) | (buffer[5] & 0x0F);
+        tc.frame = from_bcd_to_dec(buffer[2] & 0x3F);
+        tc.second = from_bcd_to_dec(buffer[3] & 0x7F);
+        tc.minute = from_bcd_to_dec(buffer[4] & 0x7F);
+        tc.hour = from_bcd_to_dec(buffer[5] & 0x3F);
     }
 
     void decode_to_userbits(UserBits& ub, const size_t offset = 0) const {
         for (size_t i = 0; i < 4; ++i)
             ub.bytes[i] = buffer[2 + offset + i];
     }
-
-    template <typename T>
-    inline auto from_bcd_to_dec(const T& n)
-        -> typename std::enable_if<std::is_integral<T>::value, size_t>::type {
-        return n - 6 * (n >> 4);
-    };
 };
 
 }  // namespace sony9pin
