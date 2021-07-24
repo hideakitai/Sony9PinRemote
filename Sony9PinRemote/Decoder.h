@@ -21,37 +21,24 @@
 
 namespace sony9pin {
 
-struct TimeCode {
-    uint8_t frame;
-    uint8_t second;
-    uint8_t minute;
-    uint8_t hour;
-    bool is_cf;
-    bool is_df;
-};
-
-union UserBits {
-    uint8_t bytes[4];
-    uint32_t i;
-};
-
-struct TimeCodeAndUserBits {
-    TimeCode tc;
-    UserBits ub;
-};
-
-#define SONY9PIN_RESPONSE_CHECK(c1, c2, sz, ret)                                      \
-    if (!available()) {                                                               \
-        LOG_ERROR("No response available");                                           \
-        return ret;                                                                   \
-    }                                                                                 \
-    if (!(cmd1() == c1) || !(cmd2() == c2)) {                                         \
-        LOG_ERROR("Packet type mismatch:", cmd1(), "!=", c1, "or", cmd2(), "!=", c2); \
-        return ret;                                                                   \
-    }                                                                                 \
-    if (size() != sz) {                                                               \
-        LOG_ERROR("Packet size not correct:", size(), "should be", sz);               \
-        return ret;                                                                   \
+#define SONY9PIN_RESPONSE_CHECK(c1, c2, sz, ret)                                                            \
+    {                                                                                                       \
+        bool is_success = true;                                                                             \
+        if (!available()) {                                                                                 \
+            LOG_ERROR("No response available");                                                             \
+            is_success = false;                                                                             \
+        } else {                                                                                            \
+            LOG_VERBOSE("Response cmd1:", (uint8_t)cmd1(), "cmd2:", cmd2(), "size:", size());               \
+        }                                                                                                   \
+        if (!(cmd1() == c1) || !(cmd2() == c2)) {                                                           \
+            LOG_ERROR("Packet type mismatch:", (uint8_t)cmd1(), "!=", (uint8_t)c1, "or", cmd2(), "!=", c2); \
+            is_success = false;                                                                             \
+        }                                                                                                   \
+        if (size() != sz) {                                                                                 \
+            LOG_ERROR("Packet size not correct:", size(), "should be", sz);                                 \
+            is_success = false;                                                                             \
+        }                                                                                                   \
+        if (!is_success) return ret;                                                                        \
     }
 
 class Decoder {
