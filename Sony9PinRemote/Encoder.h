@@ -171,7 +171,7 @@ public:
     // usually with varying speeds sent by the FORWARD controller for fine positioning.
     // Send: 21 11 40 48 (Jog @ play speed)
     Packet jog_forward(const uint8_t data1, const uint8_t data2 = 0) {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::TRANSPORT_CONTROL, TransportCtrl::JOG_FWD, data1, data2);
     }
 
@@ -180,7 +180,7 @@ public:
     // output of the material. This 'smoothing' process may slightly vary the requested speed.
     // Send: 21 11 20 52 (Jog @ half play speed)
     Packet var_forward(const uint8_t data1, const uint8_t data2 = 0) {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::TRANSPORT_CONTROL, TransportCtrl::VAR_FWD, data1, data2);
     }
 
@@ -189,7 +189,7 @@ public:
     // Usually used for visual searching.
     // Send: 21 13 42 76 (Shuttle @ slightly faster than play speed)
     Packet shuttle_forward(const uint8_t data1, const uint8_t data2 = 0) {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::TRANSPORT_CONTROL, TransportCtrl::SHUTTLE_FWD, data1, data2);
     }
 
@@ -199,7 +199,7 @@ public:
     // Send: 20 14 34
     // Returns: 10 01 11
     Packet frame_step_forward() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::TRANSPORT_CONTROL, TransportCtrl::FRAME_STEP_FWD);
     }
 
@@ -209,14 +209,14 @@ public:
     // Send: 20 20 40
     // Returns: 10 01 11
     Packet fast_reverse() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::TRANSPORT_CONTROL, TransportCtrl::FAST_REVERSE);
     }
 
     // 20.20 Rewind
     // same as FAST REVERSE
     Packet rewind() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::TRANSPORT_CONTROL, TransportCtrl::REWIND);
     }
 
@@ -225,7 +225,7 @@ public:
     // by the REVERSE controller, for fine positioning.
     // Send: 21 11 3E 70 (Jog @ slightly slower than play speed)
     Packet jog_reverse(const uint8_t data1, const uint8_t data2 = 0) {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::TRANSPORT_CONTROL, TransportCtrl::JOG_REV, data1, data2);
     }
 
@@ -234,7 +234,7 @@ public:
     // of the material. This 'smoothing' process may vary the speed slightly from the requested speed.
     // Send: 21 11 4A 7C (Jog @ two times reverse play speed)
     Packet var_reverse(const uint8_t data1, const uint8_t data2 = 0) {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::TRANSPORT_CONTROL, TransportCtrl::VAR_REV, data1, data2);
     }
 
@@ -247,7 +247,7 @@ public:
     // Send: 20 30 50
     // Returns: 10 01 11
     Packet shuttle_reverse(const uint8_t data1, const uint8_t data2 = 0) {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::TRANSPORT_CONTROL, TransportCtrl::SHUTTLE_REV, data1, data2);
     }
 
@@ -256,7 +256,7 @@ public:
     // backward and pause.
     // REPLY: ACK
     Packet frame_step_reverse() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::TRANSPORT_CONTROL, TransportCtrl::FRAME_STEP_REV);
     }
 
@@ -265,7 +265,7 @@ public:
     // minus the length of the current pre-roll (PRE-ROLL TIME PRESET).
     // REPLY: ACK
     Packet preroll() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::TRANSPORT_CONTROL, TransportCtrl::PREROLL);
     }
 
@@ -283,7 +283,7 @@ public:
     // Send: 24 24 36 52 21 F1 (Cue to 21 hours, 52 minutes, 36 seconds, 24 frames)
     // Returns: 10 01 11
     Packet cue_up_with_data(const uint8_t hh, const uint8_t mm, const uint8_t ss, const uint8_t ff) {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::TRANSPORT_CONTROL, TransportCtrl::CUE_UP_WITH_DATA, ff, ss, mm, hh);
     }
 
@@ -291,7 +291,7 @@ public:
     // UNKNOWN
     // REPLY: ACK
     Packet sync_play() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::TRANSPORT_CONTROL, TransportCtrl::SYNC_PLAY);
     }
 
@@ -299,7 +299,7 @@ public:
     // UNKNOWN
     // REPLY: ACK
     Packet prog_speed_play_plus(const uint8_t v) {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::TRANSPORT_CONTROL, TransportCtrl::PROG_SPEED_PLAY_PLUS, v);
     }
 
@@ -308,7 +308,7 @@ public:
     // UNKNOWN
     // REPLY: ACK
     Packet prog_speed_play_minus(const uint8_t v) {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::TRANSPORT_CONTROL, TransportCtrl::PROG_SPEED_PLAY_MINUS, v);
     }
 
@@ -319,7 +319,7 @@ public:
     // Send: 20 40 60
     // Returns: 10 01 11
     Packet preview() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::TRANSPORT_CONTROL, TransportCtrl::PREVIEW);
     }
 
@@ -331,7 +331,7 @@ public:
     // Send: 20 41 61
     // Returns: 10 01 11
     Packet review() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::TRANSPORT_CONTROL, TransportCtrl::REVIEW);
     }
 
@@ -343,7 +343,7 @@ public:
     // Send: 20 42 62
     // Returns: 10 01 11
     Packet auto_edit() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::TRANSPORT_CONTROL, TransportCtrl::AUTO_EDIT);
     }
 
@@ -351,7 +351,7 @@ public:
     // UNKNOWN
     // REPLY: ACK
     Packet outpoint_preview() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::TRANSPORT_CONTROL, TransportCtrl::OUTPOINT_PREVIEW);
     }
 
@@ -359,7 +359,7 @@ public:
     // UNKNOWN
     // REPLY: ACK
     Packet anti_clog_timer_disable() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         // return encode(Cmd1::TRANSPORT_CONTROL, TransportCtrl::ANTI_CLOG_TIMER_DISABLE);
         // TODO: NOT IMPLEMENTED
         LOG_WARNING("NOT IMPLEMENTED");
@@ -370,7 +370,7 @@ public:
     // UNKNOWN
     // REPLY: ACK
     Packet anti_clog_timer_enable() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         // return encode(Cmd1::TRANSPORT_CONTROL, TransportCtrl::ANTI_CLOG_TIMER_ENABLE);
         // TODO: NOT IMPLEMENTED
         LOG_WARNING("NOT IMPLEMENTED");
@@ -381,7 +381,7 @@ public:
     // UNKNOWN
     // REPLY: ACK
     Packet dmc_set_fwd(const uint8_t data1, const uint8_t data2) {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::TRANSPORT_CONTROL, TransportCtrl::DMC_SET_FWD, data1, data2);
     }
 
@@ -389,7 +389,7 @@ public:
     // UNKNOWN
     // REPLY: ACK
     Packet dmc_set_rev(const uint8_t data1, const uint8_t data2) {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::TRANSPORT_CONTROL, TransportCtrl::DMC_SET_REV, data1, data2);
     }
 
@@ -400,7 +400,7 @@ public:
     // Send: 20 60 80
     // Returns: 10 01 11
     Packet full_ee_off() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::TRANSPORT_CONTROL, TransportCtrl::FULL_EE_OFF);
     }
 
@@ -411,7 +411,7 @@ public:
     // Send: 20 61 81
     // Returns: 10 01 11
     Packet full_ee_on() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::TRANSPORT_CONTROL, TransportCtrl::FULL_EE_ON);
     }
 
@@ -422,7 +422,7 @@ public:
     // Send: 20 63 83
     // Returns: 10 01 11
     Packet select_ee_on() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::TRANSPORT_CONTROL, TransportCtrl::SELECT_EE_ON);
     }
 
@@ -435,7 +435,7 @@ public:
     // Send: 20 64 84
     // Returns: 10 01 11
     Packet edit_off() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::TRANSPORT_CONTROL, TransportCtrl::EDIT_OFF);
     }
 
@@ -450,7 +450,7 @@ public:
     // Send: 20 65 84
     // Returns: 10 01 11
     Packet edit_on() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::TRANSPORT_CONTROL, TransportCtrl::EDIT_ON);
     }
 
@@ -458,7 +458,7 @@ public:
     // UNKNOWN
     // REPLY: ACK
     Packet freeze_off() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::TRANSPORT_CONTROL, TransportCtrl::FREEZE_OFF);
     }
 
@@ -466,7 +466,7 @@ public:
     // UNKNOWN
     // REPLY: ACK
     Packet freeze_on() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::TRANSPORT_CONTROL, TransportCtrl::FREEZE_ON);
     }
 
@@ -480,8 +480,8 @@ public:
     // 0 OFF 1 ON
     // Send: 44 00 00 10 20 01 75 (CTL counter set to 1 hour, 20 minutes, 10 seconds, 0 frames)
     // Returns: 10 01 11
-    Packet timer_1_preset(const uint8_t hh, const uint8_t mm, const uint8_t ss, const uint8_t ff, const bool is_df) {
-        LOG_VERBOSE();
+    Packet timer1_preset(const uint8_t hh, const uint8_t mm, const uint8_t ss, const uint8_t ff, const bool is_df) {
+        LOG_VERBOSE(" ");
         const uint8_t h = from_dec_to_bcd(hh);
         const uint8_t m = from_dec_to_bcd(mm);
         const uint8_t s = from_dec_to_bcd(ss);
@@ -500,7 +500,7 @@ public:
     // Send: 44 04 00 15 30 00 75 (Preset TC set to 30 minutes, 15 seconds, 0 frames)
     // Returns: 10 01 11
     Packet time_code_preset(const uint8_t hh, const uint8_t mm, const uint8_t ss, const uint8_t ff, const bool is_df) {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         const uint8_t h = from_dec_to_bcd(hh);
         const uint8_t m = from_dec_to_bcd(mm);
         const uint8_t s = from_dec_to_bcd(ss);
@@ -515,7 +515,7 @@ public:
     // Send: 44 05 60 63 44 45 95 (Set UB to 06364454)
     // Returns: 10 01 11
     Packet user_bit_preset(const uint8_t data1, const uint8_t data2, const uint8_t data3, const uint8_t data4) {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::USER_BIT_PRESET, data1, data2, data3, data4);
     }
 
@@ -523,8 +523,8 @@ public:
     // Resets the control (CTL) counter to zero.
     // Send: 40 08 48
     // Returns: 10 01 11
-    Packet timer_1_reset() {
-        LOG_VERBOSE();
+    Packet timer1_reset() {
+        LOG_VERBOSE(" ");
         return encode(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::TIMER_1_RESET);
     }
 
@@ -533,7 +533,7 @@ public:
     // Send: 40 10 50
     // Returns: 10 01 11
     Packet in_entry() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::IN_ENTRY);
     }
 
@@ -542,7 +542,7 @@ public:
     // Send: 40 11 51
     // Returns: 10 01 11
     Packet out_entry() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::OUT_ENTRY);
     }
 
@@ -550,7 +550,7 @@ public:
     // UNKNOWN
     // REPLY: ACK
     Packet audio_in_entry() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         // return encode(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::AUDIO_IN_ENTRY);
         // TODO: NOT IMPLEMENTED
         LOG_WARNING("NOT IMPLEMENTED");
@@ -561,7 +561,7 @@ public:
     // UNKNOWN
     // REPLY: ACK
     Packet audio_out_entry() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         // return encode(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::AUDIO_OUT_ENTRY);
         // TODO: NOT IMPLEMENTED
         LOG_WARNING("NOT IMPLEMENTED");
@@ -574,7 +574,7 @@ public:
     // Send: 44 14 21 16 25 04 68 (Set in point to 4 hours, 25 minutes, 16 seconds, 21 frames)
     // Returns: 10 01 11
     Packet in_data_preset(const uint8_t hh, const uint8_t mm, const uint8_t ss, const uint8_t ff) {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         const uint8_t h = from_dec_to_bcd(hh);
         const uint8_t m = from_dec_to_bcd(mm);
         const uint8_t s = from_dec_to_bcd(ss);
@@ -589,7 +589,7 @@ public:
     // Send: 44 15 05 09 27 04 92 (Set out point to 4 hours, 27 minutes, 9 seconds, 5 frames)
     // Returns: 10 01 11
     Packet out_data_preset(const uint8_t hh, const uint8_t mm, const uint8_t ss, const uint8_t ff) {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         const uint8_t h = from_dec_to_bcd(hh);
         const uint8_t m = from_dec_to_bcd(mm);
         const uint8_t s = from_dec_to_bcd(ss);
@@ -602,7 +602,7 @@ public:
     // UNKNOWN
     // REPLY: ACK
     Packet audio_in_data_preset() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         // return encode(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::AUDIO_IN_DATA_PRESET);
         // TODO: NOT IMPLEMENTED
         LOG_WARNING("NOT IMPLEMENTED");
@@ -613,7 +613,7 @@ public:
     // UNKNOWN
     // REPLY: ACK
     Packet audio_out_data_preset() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         // return encode(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::AUDIO_OUT_DATA_PRESET);
         // TODO: NOT IMPLEMENTED
         LOG_WARNING("NOT IMPLEMENTED");
@@ -625,7 +625,7 @@ public:
     // Send: 40 18 58
     // Returns: 10 01 11
     Packet in_shift_plus() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::IN_SHIFT_PLUS);
     }
 
@@ -634,7 +634,7 @@ public:
     // Send: 40 19 59
     // Returns: 10 01 11
     Packet in_shift_minus() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::IN_SHIFT_MINUS);
     }
 
@@ -643,7 +643,7 @@ public:
     // Send: 40 1A 5A
     // Returns: 10 01 11
     Packet out_shift_plus() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::OUT_SHIFT_PLUS);
     }
 
@@ -652,7 +652,7 @@ public:
     // Send: 40 1B 5B
     // Returns: 10 01 11
     Packet out_shift_minus() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::OUT_SHIFT_MINUS);
     }
 
@@ -660,7 +660,7 @@ public:
     // UNKNOWN
     // REPLY: ACK
     Packet audio_in_shift_plus() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::AUDIO_IN_SHIFT_PLUS);
     }
 
@@ -668,7 +668,7 @@ public:
     // UNKNOWN
     // REPLY: ACK
     Packet audio_in_shift_minus() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::AUDIO_IN_SHIFT_MINUS);
     }
 
@@ -676,7 +676,7 @@ public:
     // UNKNOWN
     // REPLY: ACK
     Packet audio_out_shift_plus() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::AUDIO_OUT_SHIFT_PLUS);
     }
 
@@ -684,7 +684,7 @@ public:
     // UNKNOWN
     // REPLY: ACK
     Packet audio_out_shift_minus() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::AUDIO_OUT_SHIFT_MINUS);
     }
 
@@ -693,7 +693,7 @@ public:
     // Send: 40 20 60
     // Returns: 10 01 11
     Packet in_flag_reset() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::IN_FLAG_RESET);
     }
 
@@ -702,7 +702,7 @@ public:
     // Send: 40 21 61
     // Returns: 10 01 11
     Packet out_flag_reset() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::OUT_FLAG_RESET);
     }
 
@@ -710,7 +710,7 @@ public:
     // UNKNOWN
     // REPLY: ACK
     Packet audio_in_flag_reset() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::AUDIO_IN_FLAG_RESET);
     }
 
@@ -718,7 +718,7 @@ public:
     // UNKNOWN
     // REPLY: ACK
     Packet audio_out_flag_reset() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::AUDIO_OUT_FLAG_RESET);
     }
 
@@ -729,7 +729,7 @@ public:
     // Send: 40 24 64
     // Returns: 10 01 11
     Packet in_recall() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::IN_RECALL);
     }
 
@@ -740,7 +740,7 @@ public:
     // Send: 40 25 65
     // Returns: 10 01 11
     Packet out_recall() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::OUT_RECALL);
     }
 
@@ -748,7 +748,7 @@ public:
     // UNKNOWN
     // REPLY: ACK
     Packet audio_in_recall() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::AUDIO_IN_RECALL);
     }
 
@@ -756,7 +756,7 @@ public:
     // UNKNOWN
     // REPLY: ACK
     Packet audio_out_recall() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::AUDIO_OUT_RECALL);
     }
 
@@ -764,7 +764,7 @@ public:
     // UNKNOWN
     // REPLY: ACK
     Packet lost_lock_reset() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::LOST_LOCK_RESET);
     }
 
@@ -782,7 +782,7 @@ public:
     // Send: 41 30 62 D3 (Insert Video and Audio-2 in next edit)
     // Returns: 10 01 11
     Packet edit_preset(const uint8_t data1, const uint8_t data2) {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         // TODO: more user-friendly arguments?
         return encode(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::EDIT_PRESET, data1, data2);
     }
@@ -793,7 +793,7 @@ public:
     // Send: 44 31 00 05 00 00 7A (Set the pre-roll duration to 5 seconds)
     // Returns: 10 01 11
     Packet preroll_preset(const uint8_t hh, const uint8_t mm, const uint8_t ss, const uint8_t ff) {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         const uint8_t h = from_dec_to_bcd(hh);
         const uint8_t m = from_dec_to_bcd(mm);
         const uint8_t s = from_dec_to_bcd(ss);
@@ -806,7 +806,7 @@ public:
     // UNKNOWN
     // REPLY: ACK
     Packet tape_audio_select(const uint8_t v) {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::TAPE_AUDIO_SELECT, v);
     }
 
@@ -815,7 +815,7 @@ public:
     // UNKNOWN
     // REPLY: ACK
     Packet servo_ref_select(const uint8_t v) {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::SERVO_REF_SELECT, v);
     }
 
@@ -823,7 +823,7 @@ public:
     // UNKNOWN
     // REPLY: ACK
     Packet head_select(const uint8_t v) {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::HEAD_SELECT, v);
     }
 
@@ -831,7 +831,7 @@ public:
     // UNKNOWN
     // REPLY: ACK
     Packet color_frame_select(const uint8_t v) {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::COLOR_FRAME_SELECT, v);
     }
 
@@ -844,7 +844,7 @@ public:
     // Send: 41 36 11 88 (Set the device to time code head)
     // Returns: 10 01 11
     Packet timer_mode_select(const TimerMode tm) {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::TIMER_MODE_SELECT, (uint8_t)tm);
     }
 
@@ -852,7 +852,7 @@ public:
     // UNKNOWN
     // REPLY: ACK
     Packet input_check(const uint8_t v) {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::INPUT_CHECK, v);
     }
 
@@ -860,7 +860,7 @@ public:
     // UNKNOWN
     // REPLY: ACK
     Packet edit_field_select(const uint8_t v) {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::EDIT_FIELD_SELECT, v);
     }
 
@@ -868,7 +868,7 @@ public:
     // UNKNOWN
     // REPLY: ACK
     Packet freeze_mode_select(const uint8_t v) {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::FREEZE_MODE_SELECT, v);
     }
 
@@ -876,7 +876,7 @@ public:
     // UNKNOWN
     // REPLY: ACK
     Packet record_inhibit() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         // return encode(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::RECORD_INHIBIT);
         // TODO: NOT IMPLEMENTED
         LOG_WARNING("NOT IMPLEMENTED");
@@ -888,7 +888,7 @@ public:
     // Send: 40 40 80
     // Returns: 10 01 11
     Packet auto_mode_off() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::AUTO_MODE_OFF);
     }
 
@@ -897,7 +897,7 @@ public:
     // Send: 40 41 81
     // Returns: 10 01 11
     Packet auto_mode_on() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::AUTO_MODE_ON);
     }
 
@@ -905,7 +905,7 @@ public:
     // UNKNOWN
     // REPLY: ACK
     Packet spot_erase_off() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::SPOT_ERASE_OFF);
     }
 
@@ -913,7 +913,7 @@ public:
     // UNKNOWN
     // REPLY: ACK
     Packet spot_erase_on() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::SPOT_ERASE_ON);
     }
 
@@ -921,7 +921,7 @@ public:
     // UNKNOWN
     // REPLY: ACK
     Packet audio_split_off() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::AUDIO_SPLIT_OFF);
     }
 
@@ -929,7 +929,7 @@ public:
     // UNKNOWN
     // REPLY: ACK
     Packet audio_split_on() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::AUDIO_SPLIT_OFF);
     }
 
@@ -937,7 +937,7 @@ public:
     // UNKNOWN
     // REPLY: ACK
     Packet output_h_phase() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         // return encode(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::OUTPUT_H_PHASE);
         // TODO: NOT IMPLEMENTED
         LOG_WARNING("NOT IMPLEMENTED");
@@ -948,7 +948,7 @@ public:
     // UNKNOWN
     // REPLY: ACK
     Packet output_video_phase() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         // return encode(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::OUTPUT_VIDEO_PHASE);
         // TODO: NOT IMPLEMENTED
         LOG_WARNING("NOT IMPLEMENTED");
@@ -959,7 +959,7 @@ public:
     // UNKNOWN
     // REPLY: ACK
     Packet audio_input_level() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         // return encode(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::AUDIO_INPUT_LEVEL);
         // TODO: NOT IMPLEMENTED
         LOG_WARNING("NOT IMPLEMENTED");
@@ -970,7 +970,7 @@ public:
     // UNKNOWN
     // REPLY: ACK
     Packet audio_output_level() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         // return encode(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::AUDIO_OUTPUT_LEVEL);
         // TODO: NOT IMPLEMENTED
         LOG_WARNING("NOT IMPLEMENTED");
@@ -981,7 +981,7 @@ public:
     // UNKNOWN
     // REPLY: ACK
     Packet audio_adv_level() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         // return encode(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::AUDIO_ADV_LEVEL);
         // TODO: NOT IMPLEMENTED
         LOG_WARNING("NOT IMPLEMENTED");
@@ -992,7 +992,7 @@ public:
     // UNKNOWN
     // REPLY: ACK
     Packet audio_output_phase() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         // return encode(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::AUDIO_OUTPUT_PHASE);
         // TODO: NOT IMPLEMENTED
         LOG_WARNING("NOT IMPLEMENTED");
@@ -1003,7 +1003,7 @@ public:
     // UNKNOWN
     // REPLY: ACK
     Packet audio_adv_output_phase() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         // return encode(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::AUDIO_ADV_OUTPUT_PHASE);
         // TODO: NOT IMPLEMENTED
         LOG_WARNING("NOT IMPLEMENTED");
@@ -1014,7 +1014,7 @@ public:
     // UNKNOWN
     // REPLY: ACK
     Packet cross_fade_time_preset() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         // return encode(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::CROSS_FADE_TIME_PRESET);
         // TODO: NOT IMPLEMENTED
         LOG_WARNING("NOT IMPLEMENTED");
@@ -1058,7 +1058,7 @@ public:
     //                    : tracking menu can be made in remote mode.
     // REPLY: ACK
     Packet local_key_map() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         // return encode(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::LOCAL_KEY_MAP);
         // TODO: NOT IMPLEMENTED
         LOG_WARNING("NOT IMPLEMENTED");
@@ -1069,7 +1069,7 @@ public:
     // UNKNOWN
     // REPLY: ACK
     Packet still_off_time(const uint8_t data1, const uint8_t data2) {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         // TODO: more user-friendly arguments?
         return encode(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::STILL_OFF_TIME, data1, data2);
     }
@@ -1078,7 +1078,7 @@ public:
     // UNKNOWN
     // REPLY: ACK
     Packet stby_off_time(const uint8_t data1, const uint8_t data2) {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         // TODO: more user-friendly arguments?
         return encode(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::STBY_OFF_TIME, data1, data2);
     }
@@ -1095,7 +1095,7 @@ public:
     // Send: 61 0A 11 7C
     // Returns: 10 01 11
     Packet tc_gen_sense(const uint8_t data1) {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::SENSE_REQUEST, SenseRequest::TC_GEN_SENSE, data1);
     }
     Packet tc_gen_sense_tc() {
@@ -1120,7 +1120,7 @@ public:
     // REPLY: based on CURRENT TIME SENSE RETURN chart
     // https://www.drastic.tv/images/protocol/p_tcrtn.gif
     Packet current_time_sense(const uint8_t data1) {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::SENSE_REQUEST, SenseRequest::CURRENT_TIME_SENSE, data1);
     }
 
@@ -1130,7 +1130,7 @@ public:
     // Send: 60 10 70
     // Returns: 74 10 10 20 30 24 7E (Return in point of 24:30:20:10)
     Packet in_data_sense() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::SENSE_REQUEST, SenseRequest::IN_DATA_SENSE);
     }
 
@@ -1140,7 +1140,7 @@ public:
     // Send: 60 11 71
     // Returns: 74 11 24 30 20 10 7F (Return in point of 10:20:30:24)
     Packet out_data_sense() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::SENSE_REQUEST, SenseRequest::OUT_DATA_SENSE);
     }
 
@@ -1148,7 +1148,7 @@ public:
     // UNKNOWN
     // REPLY: A_IN_DATA
     Packet audio_in_data_sense() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::SENSE_REQUEST, SenseRequest::AUDIO_IN_DATA_SENSE);
     }
 
@@ -1156,7 +1156,7 @@ public:
     // UNKNOWN
     // REPLY: A_OUT_DATA
     Packet audio_out_data_sense() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::SENSE_REQUEST, SenseRequest::AUDIO_OUT_DATA_SENSE);
     }
 
@@ -1171,7 +1171,7 @@ public:
     // i.e. DATA No.3 to DATA No.6 of the 74.20 STATUS DATA
     // REPLY: STATUS_DATA as above
     Packet status_sense(const uint8_t start = 0, const uint8_t size = 10) {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         const uint8_t v = size | (start << 4);
         return encode(Cmd1::SENSE_REQUEST, SenseRequest::STATUS_SENSE, v);
     }
@@ -1180,7 +1180,7 @@ public:
     // UNKNOWN
     // REPLY: ACK
     Packet extended_vtr_status(const uint8_t data1) {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::SENSE_REQUEST, SenseRequest::EXTENDED_VTR_STATUS, data1);
     }
 
@@ -1188,7 +1188,7 @@ public:
     // UNKNOWN
     // REPLY: ACK
     Packet signal_control_sense(const uint8_t data1, const uint8_t data2) {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::SENSE_REQUEST, SenseRequest::SIGNAL_CONTROL_SENSE, data1, data2);
     }
 
@@ -1196,7 +1196,7 @@ public:
     // UNKNOWN
     // REPLY: ACK
     Packet local_keymap_sense() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         // return encode(Cmd1::SENSE_REQUEST, SenseRequest::LOCAL_KEYMAP_SENSE);
         // TODO: NOT IMPLEMENTED
         LOG_WARNING("NOT IMPLEMENTED");
@@ -1207,7 +1207,7 @@ public:
     // UNKNOWN
     // REPLY: ACK
     Packet head_meter_sense(const uint8_t data1) {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::SENSE_REQUEST, SenseRequest::HEAD_METER_SENSE, data1);
     }
 
@@ -1215,7 +1215,7 @@ public:
     // UNKNOWN
     // REPLY: ACK
     Packet remaining_time_sense() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::SENSE_REQUEST, SenseRequest::REMAINING_TIME_SENSE);
     }
 
@@ -1223,7 +1223,7 @@ public:
     // UNKNOWN
     // REPLY: SPEED_DATA
     Packet cmd_speed_sense() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::SENSE_REQUEST, SenseRequest::CMD_SPEED_SENSE);
     }
 
@@ -1231,7 +1231,7 @@ public:
     // UNKNOWN
     // REPLY: ACK
     Packet edit_preset_sense(const uint8_t data1) {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::SENSE_REQUEST, SenseRequest::EDIT_PRESET_SENSE, data1);
     }
 
@@ -1241,7 +1241,7 @@ public:
     // Send: 60 30 90
     // Returns: 74 30 00 05 00 00 A9 (Pre-roll is five seconds)
     Packet preroll_time_sense() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::SENSE_REQUEST, SenseRequest::PREROLL_TIME_SENSE);
     }
 
@@ -1253,7 +1253,7 @@ public:
     // Send: 60 36 96
     // Returns: 71 36 00 A6 (Sense mode time code)
     Packet timer_mode_sense() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::SENSE_REQUEST, SenseRequest::TIMER_MODE_SENSE);
     }
 
@@ -1261,7 +1261,7 @@ public:
     // UNKNOWN
     // REPLY: RECORD_INHIBIT_STATUS
     Packet record_inhibit_sense() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::SENSE_REQUEST, SenseRequest::RECORD_INHIBIT_SENSE);
     }
 
@@ -1269,7 +1269,7 @@ public:
     // UNKNOWN
     // REPLY: RECORD_INHIBIT_STATUS
     Packet da_inp_emph_sense() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::SENSE_REQUEST, SenseRequest::DA_INPUT_EMPHASIS_SENSE);
     }
 
@@ -1277,7 +1277,7 @@ public:
     // UNKNOWN
     // REPLY: RECORD_INHIBIT_STATUS
     Packet da_pb_emph_sense() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::SENSE_REQUEST, SenseRequest::DA_PLAYBACK_EMPHASIS_SENSE);
     }
 
@@ -1285,7 +1285,7 @@ public:
     // UNKNOWN
     // REPLY: RECORD_INHIBIT_STATUS
     Packet da_samp_freq_sense() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::SENSE_REQUEST, SenseRequest::DA_SAMPLING_FREQUENCY_SENSE);
     }
 
@@ -1293,7 +1293,7 @@ public:
     // UNKNOWN
     // REPLY: RECORD_INHIBIT_STATUS
     Packet cross_fade_time_sense(const uint8_t data1) {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::SENSE_REQUEST, SenseRequest::CROSS_FADE_TIME_SENSE, data1);
     }
 
@@ -1303,7 +1303,7 @@ public:
     // 16-bit little endian fractional position [0..65535]
     // REPLY: ACK
     Packet bmd_seek_to_timeline_pos(const uint8_t data1, const uint8_t data2) {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         // TODO: more user-friendly arguments?
         return encode(Cmd1::SYSTEM_CONTROL, SystemCtrl::BMD_SEEK_TO_TIMELINE_POS, data1, data2);
     }
@@ -1312,7 +1312,7 @@ public:
     // UNKNOWN
     // REPLY: ACK
     Packet clear_playlist() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::TRANSPORT_CONTROL, TransportCtrl::CLEAR_PLAYLIST);
     }
 
@@ -1323,7 +1323,7 @@ public:
     // 4 Byte out point timecode (format is FFSSMMHH)
     // REPLY: ACK
     Packet append_preset() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         // return encode(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::APPEND_PRESET);
         // TODO: NOT IMPLEMENTED
         LOG_WARNING("NOT IMPLEMENTED");
@@ -1335,7 +1335,7 @@ public:
     // Bit1 is single clip/timeline, 0 = single clip, 1 = timeline
     // REPLY: ACK
     Packet set_playback_loop(const bool b_enable, const uint8_t mode = LoopMode::SINGLE_CLIP) {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         const uint8_t v = (uint8_t)b_enable | ((uint8_t)(mode & 0x01) << 1);
         return encode(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::SET_PLAYBACK_LOOP, v);
     }
@@ -1347,7 +1347,7 @@ public:
     // 3 = Show black
     // REPLY: ACK
     Packet set_stop_mode(const uint8_t stop_mode) {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::PRESET_SELECT_CONTROL, PresetSelectCtrl::SET_STOP_MODE, stop_mode);
     }
 
@@ -1355,7 +1355,7 @@ public:
     // One-byte signed integer, which is the number of clips to skip (negative for backwards).
     // REPLY: ACK
     Packet bmd_seek_relative_clip(const int8_t index) {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::BMD_EXTENSION, BmdExtensions::SEEK_RELATIVE_CLIP, index);
     }
 
@@ -1363,7 +1363,7 @@ public:
     // 8-bit signed number of clips to skip from current clip
     // REPLY: ACK
     Packet auto_skip(const int8_t n) {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::BMD_ADVANCED_MEDIA_PRTCL, BmdAdvancedMediaProtocol::AUTO_SKIP, (uint8_t)n);
     }
 
@@ -1372,7 +1372,7 @@ public:
     // when x = 1, # clips can be specified in the encode data
     // REPLY: IDListing
     Packet list_next_id() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         // return encode(Cmd1::BMD_ADVANCED_MEDIA_PRTCL, BmdAdvancedMediaProtocol::LIST_NEXT_ID);
         // TODO: NOT IMPLEMENTED
         LOG_WARNING("NOT IMPLEMENTED");
