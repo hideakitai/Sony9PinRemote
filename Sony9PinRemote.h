@@ -38,6 +38,10 @@ using StreamType = Stream;
 #define SONY9PINREMOTE_STREAM_AVAILABLE() stream->available()
 #define SONY9PINREMOTE_STREAM_FLUSH() stream->flush()
 #define SONY9PINREMOTE_ELAPSED_MILLIS() millis()
+namespace serial {
+    static constexpr size_t BAUDRATE {38400};
+    static constexpr size_t CONFIG {SERIAL_8O1};
+}  // namespace serial
 
 // openFrameworks
 #elif defined(OF_VERSION_MAJOR)
@@ -53,6 +57,10 @@ using StreamType = ofSerial;
 #define SONY9PINREMOTE_STREAM_AVAILABLE() stream->available()
 #define SONY9PINREMOTE_STREAM_FLUSH() stream->flush()
 #define SONY9PINREMOTE_ELAPSED_MILLIS() ofGetElapsedTimeMillis()
+namespace serial {
+    static constexpr size_t BAUDRATE {38400};
+    // static constexpr size_t CONFIG {SERIAL_8O1};
+}  // namespace serial
 
 #endif  // ARDUINO / OF_VERSION_MAIJOR
 
@@ -62,11 +70,6 @@ using StreamType = ofSerial;
 #error THIS PLATFORM IS NOT SUPPORTED
 
 #endif  // SONY9PINREMOTE_ENABLE_STREAM
-
-namespace serial {
-    static constexpr size_t BAUDRATE {38400};
-    static constexpr size_t CONFIG {SERIAL_8O1};
-}  // namespace serial
 
 class Controller {
     // reference
