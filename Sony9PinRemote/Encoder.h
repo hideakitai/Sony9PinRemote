@@ -50,7 +50,7 @@ public:
     // Returns: 10 01 11
     // HyperDeck NOTE: NOT SUPPORTED
     Packet local_disable() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::SYSTEM_CONTROL, SystemCtrl::LOCAL_DISABLE);
     }
 
@@ -61,7 +61,7 @@ public:
     // Send: 00 11 11
     // Returns: 12 11 FE 01 22
     Packet device_type_request() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::SYSTEM_CONTROL, SystemCtrl::DEVICE_TYPE);
     }
 
@@ -72,7 +72,7 @@ public:
     // Returns: 10 01 11
     // HyperDeck NOTE: NOT SUPPORTED
     Packet local_enable() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::SYSTEM_CONTROL, SystemCtrl::LOCAL_ENABLE);
     }
 
@@ -84,7 +84,7 @@ public:
     // Send: 20 00 20
     // Returns: 10 01 11
     Packet stop() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::TRANSPORT_CONTROL, TransportCtrl::STOP);
     }
 
@@ -93,7 +93,7 @@ public:
     // Send: 20 01 21
     // Returns: 10 01 11
     Packet play() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::TRANSPORT_CONTROL, TransportCtrl::PLAY);
     }
 
@@ -102,7 +102,7 @@ public:
     // Send: 20 02 22
     // Returns: 10 01 11
     Packet record() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::TRANSPORT_CONTROL, TransportCtrl::RECORD);
     }
 
@@ -111,7 +111,7 @@ public:
     // Send: 20 04 24
     // Returns: 10 01 11
     Packet standby_off() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::TRANSPORT_CONTROL, TransportCtrl::STANDBY_OFF);
     }
 
@@ -120,7 +120,7 @@ public:
     // Send: 20 05 25
     // Returns: 10 01 11
     Packet standby_on() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::TRANSPORT_CONTROL, TransportCtrl::STANDBY_ON);
     }
 
@@ -129,7 +129,7 @@ public:
     // Send: 20 0F 2F
     // Returns: 10 01 11
     Packet eject() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::TRANSPORT_CONTROL, TransportCtrl::EJECT);
     }
 
@@ -139,7 +139,7 @@ public:
     // Send: 20 10 30
     // Returns: 10 01 11
     Packet fast_forward() {
-        LOG_VERBOSE();
+        LOG_VERBOSE(" ");
         return encode(Cmd1::TRANSPORT_CONTROL, TransportCtrl::FAST_FWD);
     }
 

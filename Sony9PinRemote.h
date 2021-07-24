@@ -14,6 +14,12 @@
 #include "Sony9PinRemote/Encoder.h"
 #include "Sony9PinRemote/Decoder.h"
 
+#ifdef SONY9PINREMOTE_DEBUGLOG_ENABLE
+#include "Sony9PinRemote/util/DebugLog/DebugLogEnable.h"
+#else
+#include "Sony9PinRemote/util/DebugLog/DebugLogDisable.h"
+#endif
+
 namespace sony9pin {
 
 #ifdef SONY9PINREMOTE_ENABLE_STREAM
@@ -352,8 +358,8 @@ public:
 
     // =============== 4 - Preset/Select Control ===============
 
-    void timer_1_preset(const uint8_t hh, const uint8_t mm, const uint8_t ss, const uint8_t ff, const bool is_df) {
-        auto packet = encoder.timer_1_preset(hh, mm, ss, ff, is_df);
+    void timer1_preset(const uint8_t hh, const uint8_t mm, const uint8_t ss, const uint8_t ff, const bool is_df) {
+        auto packet = encoder.timer1_preset(hh, mm, ss, ff, is_df);
         SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
@@ -367,8 +373,8 @@ public:
         SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
-    void timer_1_reset() {
-        auto packet = encoder.timer_1_reset();
+    void timer1_reset() {
+        auto packet = encoder.timer1_reset();
         SONY9PINREMOTE_STREAM_WRITE(packet.data(), packet.size());
     }
 
@@ -1018,5 +1024,7 @@ public:
 namespace Sony9PinRemote = sony9pin;
 namespace Sony9PinDevice = Sony9PinRemote::DeviceType;
 namespace Sony9PinSerial = Sony9PinRemote::serial;
+
+#include "Sony9PinRemote/util/DebugLog/DebugLogRestoreState.h"
 
 #endif  // HT_RS422_SONY9PINREMOTE_H
