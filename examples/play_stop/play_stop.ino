@@ -1,3 +1,4 @@
+// #define SONY9PINREMOTE_DEBUGLOG_ENABLE
 #include <Sony9PinRemote.h>
 
 Sony9PinRemote::Controller deck;
@@ -11,8 +12,7 @@ void setup() {
 
     // get device status
     deck.status_sense();
-    if (deck.parse_until(1000))  // wait until response comes (timeout = 1000ms)
-    {
+    if (deck.parse_until(1000)) {  // wait until response comes (timeout = 1000ms)
         if (!deck.is_media_exist())
             Serial.println("ERROR: there is no media!");
 
@@ -43,8 +43,6 @@ void setup() {
 }
 
 void loop() {
-    deck.parse();
-
     // if previous command has completed (response has come)
     if (deck.ready()) {
         static bool b = false;
@@ -54,5 +52,11 @@ void loop() {
             deck.stop();
         b = !b;
         delay(2000);
+    }
+
+    if (deck.parse()) {        // if some reply has come
+        if (!deck.ack()) {     // if the reply is not ack
+            deck.print_nak();  // print nak
+        }
     }
 }
