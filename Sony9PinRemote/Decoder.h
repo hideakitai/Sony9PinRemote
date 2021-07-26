@@ -21,24 +21,36 @@
 
 namespace sony9pin {
 
-#define SONY9PIN_RESPONSE_CHECK(c1, c2, sz, ret)                                                            \
-    {                                                                                                       \
-        bool is_success = true;                                                                             \
-        if (!available()) {                                                                                 \
-            LOG_ERROR("No response available");                                                             \
-            is_success = false;                                                                             \
-        } else {                                                                                            \
-            LOG_VERBOSE("Response cmd1:", (uint8_t)cmd1(), "cmd2:", cmd2(), "size:", size());               \
-        }                                                                                                   \
-        if (!(cmd1() == c1) || !(cmd2() == c2)) {                                                           \
-            LOG_ERROR("Packet type mismatch:", (uint8_t)cmd1(), "!=", (uint8_t)c1, "or", cmd2(), "!=", c2); \
-            is_success = false;                                                                             \
-        }                                                                                                   \
-        if (size() != sz) {                                                                                 \
-            LOG_ERROR("Packet size not correct:", size(), "should be", sz);                                 \
-            is_success = false;                                                                             \
-        }                                                                                                   \
-        if (!is_success) return ret;                                                                        \
+#define SONY9PIN_RESPONSE_CHECK(c1, c2, sz, ret)        \
+    {                                                   \
+        bool is_success = true;                         \
+        if (!available()) {                             \
+            LOG_ERROR("No response available");         \
+            is_success = false;                         \
+        } else {                                        \
+            LOG_VERBOSE(                                \
+                DebugLogBase::HEX,                      \
+                "Response cmd1:", (uint8_t)cmd1(),      \
+                "cmd2:", cmd2(),                        \
+                "size:", size());                       \
+            if (!(cmd1() == c1) || !(cmd2() == c2)) {   \
+                LOG_ERROR(                              \
+                    DebugLogBase::HEX,                  \
+                    "Packet type mismatch:",            \
+                    (uint8_t)cmd1(), "!=", (uint8_t)c1, \
+                    "or",                               \
+                    cmd2(), "!=", c2);                  \
+                is_success = false;                     \
+            }                                           \
+            if (size() != sz) {                         \
+                LOG_ERROR(                              \
+                    DebugLogBase::DEC,                  \
+                    "Packet size not correct:",         \
+                    size(), "should be", sz);           \
+                is_success = false;                     \
+            }                                           \
+        }                                               \
+        if (!is_success) return ret;                    \
     }
 
 class Decoder {
@@ -94,7 +106,7 @@ public:
                 next_size = size + 3;  // header + cmd2 + size + checksum
                 buffer[curr_size++] = d;
             } else {  // this is not response headr
-                LOG_ERROR("Packet is not response type:", type);
+                LOG_ERROR(DebugLogBase::HEX, "Packet is not response:", type);
                 clear();
             }
         } else if (curr_size < next_size) {
@@ -108,7 +120,7 @@ public:
                 if (d == checksum) {
                     return true;
                 } else {
-                    LOG_ERROR("Response checksum is not matched:", checksum, "should be", d);
+                    LOG_ERROR(DebugLogBase::HEX, "Checksum not matched:", checksum, "should be", d);
                     clear();
                 }
             }
