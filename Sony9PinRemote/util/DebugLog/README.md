@@ -32,6 +32,10 @@ void setup() {
     // PRINT and PRINTLN are always enabled regardless of debug mode or release mode
     PRINT("this is for debug");
     PRINTLN(1, 2.2, "you can", "print variable args")
+    PRINTLN("you can print variable args with bases",
+        DebugLogBase::OCT, 85,   // 0o125
+        DebugLogBase::DEC, 85,   // 0d85
+        DebugLogBase::HEX, 85);  // 0x55
 
     // check log level 0: NONE, 1: ERRORS, 2: WARNINGS, 3: VERBOSE
     PRINTLN("current log level is", (int)LOG_GET_LEVEL());
@@ -98,6 +102,18 @@ enum class LogLevel {
     ERRORS   = 1,
     WARNINGS = 2,
     VERBOSE  = 3
+};
+```
+
+
+### Log Base
+
+```C++
+enum class LogBase {
+    DEC = 10,
+    HEX = 16,
+    OCT = 8,
+    BIN = 2,  // only for Arduino
 };
 ```
 
@@ -170,8 +186,10 @@ Please see practical example  `examples/control_scope` for details.
 
 ## Used Inside of
 
+- [ArduinoOSC](https://github.com/hideakitai/ArduinoOSC)
 - [MsgPack](https://github.com/hideakitai/MsgPack)
 - [ES920](https://github.com/hideakitai/ES920)
+- [Sony9PinRemote](https://github.com/hideakitai/Sony9PinRemote)
 
 
 ## License
