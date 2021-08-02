@@ -6,7 +6,7 @@
 #endif
 #include <stdint.h>
 
-#if defined(ARDUINO) || defined(OF_VERSION_MAJOR)
+#if defined(ARDUINO) || defined(OF_VERSION_MAJOR) || defined(QT_VERSION)
 #define SONY9PINREMOTE_ENABLE_STREAM
 #endif
 
@@ -62,8 +62,30 @@ namespace serial {
     // static constexpr size_t CONFIG {SERIAL_8O1};
 }  // namespace serial
 
-#endif  // ARDUINO / OF_VERSION_MAIJOR
+// Qt
+#elif defined(QT_VERSION)
+#include <time.h>
+using StreamType = QSerialPort;
+#define SONY9PINREMOTE_STREAM_WRITE(data, size)        \
+    if (size > 0) {                                    \
+        if (b_force_send || !b_wait_for_response) {    \
+            stream->write((const char*)data, size);    \
+            if (!stream->waitForBytesWritten()) {      \
+                LOG_ERROR("Writing to serial FAILED"); \
+            }                                          \
+            b_wait_for_response = true;                \
+        }                                              \
+    }
+#define SONY9PINREMOTE_STREAM_READ(data, size) stream->read((char*)data, size)
+#define SONY9PINREMOTE_STREAM_AVAILABLE() stream->waitForReadyRead(1) ? stream->bytesAvailable() : 0
+#define SONY9PINREMOTE_STREAM_FLUSH() stream->flush()
+#define SONY9PINREMOTE_ELAPSED_MILLIS() uint32_t((double)(clock()) / (CLOCKS_PER_SEC / 1000))
+namespace serial {
+    static constexpr size_t BAUDRATE {QSerialPort::Baud38400};
+    // static constexpr size_t CONFIG {SERIAL_8O1};
+}  // namespace serial
 
+#endif  // ARDUINO / OF_VERSION_MAIJOR / QT_VERSION
 // Not Supported
 #else  // SONY9PINREMOTE_ENABLE_STREAM
 
