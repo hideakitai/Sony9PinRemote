@@ -34,7 +34,7 @@ using StreamType = Stream;
             b_wait_for_response = true;             \
         }                                           \
     }
-#define SONY9PINREMOTE_STREAM_READ() stream->read()
+#define SONY9PINREMOTE_STREAM_READ(data, size) stream->readBytes(data, size)
 #define SONY9PINREMOTE_STREAM_AVAILABLE() stream->available()
 #define SONY9PINREMOTE_STREAM_FLUSH() stream->flush()
 #define SONY9PINREMOTE_ELAPSED_MILLIS() millis()
@@ -53,7 +53,7 @@ using StreamType = ofSerial;
             b_wait_for_response = true;             \
         }                                           \
     }
-#define SONY9PINREMOTE_STREAM_READ() stream->readByte()
+#define SONY9PINREMOTE_STREAM_READ(data, size) stream->readBytes(data, size)
 #define SONY9PINREMOTE_STREAM_AVAILABLE() stream->available()
 #define SONY9PINREMOTE_STREAM_FLUSH() stream->flush()
 #define SONY9PINREMOTE_ELAPSED_MILLIS() ofGetElapsedTimeMillis()
@@ -96,41 +96,50 @@ public:
         b_force_send = force_send;
         stream = &s;
         SONY9PINREMOTE_STREAM_FLUSH();
-        while (SONY9PINREMOTE_STREAM_AVAILABLE())
-            SONY9PINREMOTE_STREAM_READ();
+        while (const size_t size = SONY9PINREMOTE_STREAM_AVAILABLE()) {
+            uint8_t* data = new uint8_t[size];
+            SONY9PINREMOTE_STREAM_READ(data, size);
+            delete[] data;
+        }
     }
 
     bool parse() {
-        while (SONY9PINREMOTE_STREAM_AVAILABLE()) {
-            if (decoder.feed(SONY9PINREMOTE_STREAM_READ())) {
-                // store the data which is useful if it can be referred anytime we want
-                switch (decoder.cmd1()) {
-                    case Cmd1::SYSTEM_CONTROL_RETURN: {
-                        switch (decoder.cmd2()) {
-                            case SystemControlReturn::NAK: {
-                                err_count++;
-                                err = decoder.nak();
-                                break;
-                            }
-                            case SystemControlReturn::DEVICE_TYPE: {
-                                dev_type = decoder.device_type();
-                                break;
+        while (const size_t size = SONY9PINREMOTE_STREAM_AVAILABLE()) {
+            uint8_t* data = new uint8_t[size];
+            SONY9PINREMOTE_STREAM_READ(data, size);
+            for (size_t i = 0; i < size; ++i) {
+                if (decoder.feed(data[i])) {
+                    // store the data which is useful if it can be referred anytime we want
+                    switch (decoder.cmd1()) {
+                        case Cmd1::SYSTEM_CONTROL_RETURN: {
+                            switch (decoder.cmd2()) {
+                                case SystemControlReturn::NAK: {
+                                    err_count++;
+                                    err = decoder.nak();
+                                    break;
+                                }
+                                case SystemControlReturn::DEVICE_TYPE: {
+                                    dev_type = decoder.device_type();
+                                    break;
+                                }
                             }
                         }
-                    }
-                    case Cmd1::SENSE_RETURN: {
-                        if (decoder.cmd2() == SenseReturn::STATUS_DATA) {
-                            // decode status based on requested range by `status_sense()`
-                            sts = decoder.status_sense(status_start, status_size);
+                        case Cmd1::SENSE_RETURN: {
+                            if (decoder.cmd2() == SenseReturn::STATUS_DATA) {
+                                // decode status based on requested range by `status_sense()`
+                                sts = decoder.status_sense(status_start, status_size);
+                            }
+                            break;
                         }
-                        break;
+                        default:
+                            break;
                     }
-                    default:
-                        break;
+                    b_wait_for_response = false;
+                    delete[] data;
+                    return true;
                 }
-                b_wait_for_response = false;
-                return true;
             }
+            delete[] data;
         }
         return false;
     }
