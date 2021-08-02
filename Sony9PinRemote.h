@@ -155,7 +155,7 @@ public:
     }
 
     bool ready() const { return b_force_send ? true : (!decoder.busy() && !b_wait_for_response); }
-    bool available() const { return available(); }
+    bool available() const { return decoder.available(); }
 
     uint16_t device_type() const { return dev_type; }
     const Status& status() const { return sts; }
