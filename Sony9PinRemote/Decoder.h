@@ -28,7 +28,7 @@ namespace sony9pin {
             LOG_ERROR("No response available");         \
             is_success = false;                         \
         } else {                                        \
-            LOG_VERBOSE(                                \
+            LOG_INFO(                                   \
                 DebugLogBase::HEX,                      \
                 "Response cmd1:", (uint8_t)cmd1(),      \
                 "cmd2:", cmd2(),                        \
