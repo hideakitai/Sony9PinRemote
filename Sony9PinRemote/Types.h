@@ -349,6 +349,10 @@ struct Errors {
     bool b_buffer_overrun;
     bool b_framing_error;
     bool b_timeout;
+
+    Errors() {
+        memset(this, 0, sizeof(Errors));
+    }
 };
 
 struct Status {
@@ -421,6 +425,10 @@ struct Status {
     bool b_rec_inhib;
     // byte 9
     bool b_fnc_abort;
+
+    Status() {
+        memset(this, 0, sizeof(Status));
+    }
 };
 
 struct TimeCode {

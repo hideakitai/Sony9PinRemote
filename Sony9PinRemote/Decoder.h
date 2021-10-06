@@ -685,7 +685,7 @@ private:
     inline auto from_bcd_to_dec(const T& n) const
         -> typename std::enable_if<std::is_integral<T>::value, size_t>::type {
         return n - 6 * (n >> 4);
-    };
+    }
 
     bool empty() const {
         return curr_size == 0;

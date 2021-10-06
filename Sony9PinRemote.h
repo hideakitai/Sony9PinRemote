@@ -146,6 +146,7 @@ public:
                                 }
                             }
                         }
+                        // Fallthrough
                         case Cmd1::SENSE_RETURN: {
                             if (decoder.cmd2() == SenseReturn::STATUS_DATA) {
                                 // decode status based on requested range by `status_sense()`
