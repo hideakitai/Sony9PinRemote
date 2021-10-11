@@ -96,7 +96,7 @@ namespace serial {
 class Controller {
     // reference
     // https://en.wikipedia.org/wiki/9-Pin_Protocol
-    // https://www.drastic.tv/support-59/legacysoftwarehardware/72-miscellaneous-legacy/158-vvcr-422-serial-protocol
+    // https://www.drastic.tv/support-59/legacysoftwarehardware/37-miscellaneous-legacy/180-vvcr-422-serial-protocol
 
     StreamType* stream;
     Encoder encoder;
