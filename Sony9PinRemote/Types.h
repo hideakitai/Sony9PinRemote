@@ -343,92 +343,84 @@ namespace StatusMask {
 // =============== Data Structs for Decoder ===============
 
 struct Errors {
-    bool b_unknown_cmd;
-    bool b_checksum_error;
-    bool b_parity_error;
-    bool b_buffer_overrun;
-    bool b_framing_error;
-    bool b_timeout;
-
-    Errors() {
-        memset(this, 0, sizeof(Errors));
-    }
+    bool b_unknown_cmd {false};
+    bool b_checksum_error {false};
+    bool b_parity_error {false};
+    bool b_buffer_overrun {false};
+    bool b_framing_error {false};
+    bool b_timeout {false};
 };
 
 struct Status {
     // byte 0
-    bool b_cassette_out;       // set if no ssd is present
-    bool b_servo_ref_missing;  // set if servo reference is absent
-    bool b_local;              // set if remote is disabled (local control)
+    bool b_cassette_out {false};       // set if no ssd is present
+    bool b_servo_ref_missing {false};  // set if servo reference is absent
+    bool b_local {false};              // set if remote is disabled (local control)
     // byte 1
-    bool b_standby;  // set if a disk is available
-    bool b_stop;     // When the machine is in full stop, this is 1. The thread state depends on the tape/ee and standby settings.
-    bool b_eject;    // When the tape is ejecting this is 1.
-    bool b_rewind;   // When the machine is in fast reverse this is 1.
-    bool b_forward;  // When the machine is in fast forward this is 1.
-    bool b_record;   // This bit goes from 0 to 1 some number of frames after the machine starts recording. For the DVR2000 we measured 5 frames. Others have varying delays on the record status.
-    bool b_play;     // This bit goes from 0 to 1 some number of frames after the machine starts playing. For the DVR2000 we measured 5 frames. Others have varying delays on the play status.
+    bool b_standby {false};  // set if a disk is available
+    bool b_stop {false};     // When the machine is in full stop, this is 1. The thread state depends on the tape/ee and standby settings.
+    bool b_eject {false};    // When the tape is ejecting this is 1.
+    bool b_rewind {false};   // When the machine is in fast reverse this is 1.
+    bool b_forward {false};  // When the machine is in fast forward this is 1.
+    bool b_record {false};   // This bit goes from 0 to 1 some number of frames after the machine starts recording. For the DVR2000 we measured 5 frames. Others have varying delays on the record status.
+    bool b_play {false};     // This bit goes from 0 to 1 some number of frames after the machine starts playing. For the DVR2000 we measured 5 frames. Others have varying delays on the play status.
     // byte 2
-    bool b_servo_lock;  // 1 indicates servos are locked. This is a necessary condition for an edit to occur correctly.
-    bool b_tso_mode;    // Bit is 1 in tape speed override: in this mode, audio and video are still locked though speed is off play speed by +/- up to 15%.
-    bool b_shuttle;
-    bool b_jog;
-    bool b_var;
-    bool b_direction;  // clear if playback is forwarding〝set if playback is reversing
-    bool b_still;      // set if playback is paused, or if in input preview mode
-    bool b_cue_up;
+    bool b_servo_lock {false};  // 1 indicates servos are locked. This is a necessary condition for an edit to occur correctly.
+    bool b_tso_mode {false};    // Bit is 1 in tape speed override: in this mode, audio and video are still locked though speed is off play speed by +/- up to 15%.
+    bool b_shuttle {false};
+    bool b_jog {false};
+    bool b_var {false};
+    bool b_direction {false};  // clear if playback is forwarding〝set if playback is reversing
+    bool b_still {false};      // set if playback is paused, or if in input preview mode
+    bool b_cue_up {false};
     // byte 3
-    bool b_auto_mode;  // set if in Auto Mode
-    bool b_freeze_on;
-    bool b_cf_mode;
-    bool b_audio_out_set;
-    bool b_audio_in_set;
-    bool b_out_set;
-    bool b_in_set;
+    bool b_auto_mode {false};  // set if in Auto Mode
+    bool b_freeze_on {false};
+    bool b_cf_mode {false};
+    bool b_audio_out_set {false};
+    bool b_audio_in_set {false};
+    bool b_out_set {false};
+    bool b_in_set {false};
     // byte 4
-    bool b_select_ee;  // set if in input preview mode
-    bool b_full_ee;
-    bool b_edit;
-    bool b_review;
-    bool b_auto_edit;
-    bool b_preview;
-    bool b_preroll;
+    bool b_select_ee {false};  // set if in input preview mode
+    bool b_full_ee {false};
+    bool b_edit {false};
+    bool b_review {false};
+    bool b_auto_edit {false};
+    bool b_preview {false};
+    bool b_preroll {false};
     // byte 5
-    bool b_insert;
-    bool b_assemble;
-    bool b_video;
-    bool b_a4;
-    bool b_a3;
-    bool b_a2;
-    bool b_a1;
+    bool b_insert {false};
+    bool b_assemble {false};
+    bool b_video {false};
+    bool b_a4 {false};
+    bool b_a3 {false};
+    bool b_a2 {false};
+    bool b_a1 {false};
     // byte 6
-    bool b_lamp_still;  // set according to playback speed and direction
-    bool b_lamp_fwd;
-    bool b_lamp_rev;
-    bool b_srch_led_8;
-    bool b_srch_led_4;
-    bool b_srch_led_2;
-    bool b_srch_led_1;
+    bool b_lamp_still {false};  // set according to playback speed and direction
+    bool b_lamp_fwd {false};
+    bool b_lamp_rev {false};
+    bool b_srch_led_8 {false};
+    bool b_srch_led_4 {false};
+    bool b_srch_led_2 {false};
+    bool b_srch_led_1 {false};
     // byte 7
-    bool b_aud_split;
-    bool b_sync_act;
-    bool b_spot_erase;
-    bool b_in_out;
+    bool b_aud_split {false};
+    bool b_sync_act {false};
+    bool b_spot_erase {false};
+    bool b_in_out {false};
     // byte 8
-    bool b_buzzer;
-    bool b_lost_lock;
-    bool b_near_eot;  // set if total space left on available SSDs is less than 3 minutes
-    bool b_eot;       // set if total space left on available SSDs is less than 30 seconds
-    bool b_cf_lock;
-    bool b_svo_alarm;
-    bool b_sys_alarm;
-    bool b_rec_inhib;
+    bool b_buzzer {false};
+    bool b_lost_lock {false};
+    bool b_near_eot {false};  // set if total space left on available SSDs is less than 3 minutes
+    bool b_eot {false};       // set if total space left on available SSDs is less than 30 seconds
+    bool b_cf_lock {false};
+    bool b_svo_alarm {false};
+    bool b_sys_alarm {false};
+    bool b_rec_inhib {false};
     // byte 9
-    bool b_fnc_abort;
-
-    Status() {
-        memset(this, 0, sizeof(Status));
-    }
+    bool b_fnc_abort {false};
 };
 
 struct TimeCode {
@@ -442,7 +434,7 @@ struct TimeCode {
 
 union UserBits {
     uint8_t bytes[4];
-    uint32_t i;
+    uint32_t i {0};
 };
 
 struct TimeCodeAndUserBits {
