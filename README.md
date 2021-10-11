@@ -68,12 +68,30 @@ void loop()
 }
 ```
 
+## Connection
+
+We need five pins of RS422/485 output at least (TX+, TX-, RX+, RX-, and GND) to connect to a deck controller with Sony 9 Pin protocol. General pin connection can be like this. But this may be changed depending on the controller.
+
+![connection_breakouts](assets/connection_breakouts.png)
+
+If you want to connect to the deck controller from your PC, the connection will be like this.
+
+![connection_breakouts](assets/connection_pc_to_deck.png)
+
+
+## References
+
+- P.30 of [HyperDeck Manual](https://documents.blackmagicdesign.com/UserManuals/HyperDeckManual.pdf)
+- [command list](https://www.drastic.tv/support-59/legacysoftwarehardware/37-miscellaneous-legacy/180-vvcr-422-serial-protocol)
+- [connection diagrams](http://www.dspj.co.jp/~manuals/mergingtechnologies/PMX_v5/EnglishManual/Sony9pin%20Wiring%20Chart.pdf)
+
+
 
 ## Supported Commands
 
 - X : Supported
-- * : Supported Encoding Only
-- Others : Not Supported
+- \* : Supported Encoding Only
+- Blank : Not Supported
 
 
 |   | Command (HEX)                   | Response (HEX)                     | Note                                 |
@@ -226,6 +244,16 @@ void loop()
 | X | [81 03] Bmd Seek Relative Clip   | [10 01] Ack                        |                                     |
 | X | [A1 01] Auto Skip                | [10 01] Ack                        |                                     |
 |   | [AX 15] List Next ID             | [10 01] Ack                        | Data format unknown                 |
+
+## Enable Debug Logger
+
+You can see the debug log when you insert following line before include `Sony9PinRemote`.
+
+``` C++
+#define SONY9PINREMOTE_DEBUGLOG_ENABLE
+#include <Sony9PinRemote.h>
+```
+
 
 ## APIs
 
@@ -417,6 +445,13 @@ struct Status
     bool b_eot;
 };
 ```
+
+## Embedded Libraries
+
+- [ArxContainer v0.4.0](https://github.com/hideakitai/ArxContainer)
+- [ArxTypeTraits v0.2.3](https://github.com/hideakitai/ArxTypeTraits)
+- [DebugLog v0.6.2](https://github.com/hideakitai/DebugLog)
+
 
 ## License
 
