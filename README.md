@@ -450,7 +450,7 @@ struct Status
 
 - [ArxContainer v0.4.0](https://github.com/hideakitai/ArxContainer)
 - [ArxTypeTraits v0.2.3](https://github.com/hideakitai/ArxTypeTraits)
-- [DebugLog v0.6.2](https://github.com/hideakitai/DebugLog)
+- [DebugLog v0.6.5](https://github.com/hideakitai/DebugLog)
 
 
 ## License
