@@ -95,5 +95,5 @@ jobs:
           sketch-paths: |
             - examples
           libraries: |
-            - source-path: ./
+            - name: Sony9PinRemote
           verbose: true

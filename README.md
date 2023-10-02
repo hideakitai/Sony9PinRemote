@@ -446,11 +446,11 @@ struct Status
 };
 ```
 
-## Embedded Libraries
+## Dependent Libraries
 
-- [ArxContainer v0.4.0](https://github.com/hideakitai/ArxContainer)
-- [ArxTypeTraits v0.2.3](https://github.com/hideakitai/ArxTypeTraits)
-- [DebugLog v0.6.5](https://github.com/hideakitai/DebugLog)
+- [ArxContainer](https://github.com/hideakitai/ArxContainer)
+- [ArxTypeTraits](https://github.com/hideakitai/ArxTypeTraits)
+- [DebugLog](https://github.com/hideakitai/DebugLog)
 
 
 ## License
