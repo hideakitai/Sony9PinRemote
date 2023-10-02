@@ -5,10 +5,10 @@ Sony9PinRemote::Controller deck;
 
 void setup() {
     Serial.begin(115200);
-    Serial5.begin(Sony9PinSerial::BAUDRATE, Sony9PinSerial::CONFIG);
+    Serial1.begin(Sony9PinSerial::BAUDRATE, Sony9PinSerial::CONFIG);
     delay(2000);
 
-    deck.attach(Serial5);
+    deck.attach(Serial1);
 
     deck.status_sense();
     if (deck.parse_until(1000))
