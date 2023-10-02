@@ -3,14 +3,14 @@
 #define SONY9PINREMOTE_ENCODER_H
 
 #include "Types.h"
-#include "util/ArxTypeTraits/ArxTypeTraits.h"
-#include "util/ArxContainer/ArxContainer.h"
-#include "util/DebugLog/DebugLog.h"
+#include <ArxTypeTraits.h>
+#include <ArxContainer.h>
+#include <DebugLog.h>
 
 #ifdef SONY9PINREMOTE_DEBUGLOG_ENABLE
-#include "util/DebugLog/DebugLogEnable.h"
+#include <DebugLogEnable.h>
 #else
-#include "util/DebugLog/DebugLogDisable.h"
+#include <DebugLogDisable.h>
 #endif
 
 namespace sony9pin {
