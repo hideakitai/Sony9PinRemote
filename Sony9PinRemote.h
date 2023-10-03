@@ -15,9 +15,9 @@
 #include "Sony9PinRemote/Decoder.h"
 
 #ifdef SONY9PINREMOTE_DEBUGLOG_ENABLE
-#include "Sony9PinRemote/util/DebugLog/DebugLogEnable.h"
+#include <DebugLogEnable.h>
 #else
-#include "Sony9PinRemote/util/DebugLog/DebugLogDisable.h"
+#include <DebugLogDisable.h>
 #endif
 
 namespace sony9pin {
@@ -1164,6 +1164,6 @@ namespace Sony9PinRemote = sony9pin;
 namespace Sony9PinDevice = Sony9PinRemote::DeviceType;
 namespace Sony9PinSerial = Sony9PinRemote::serial;
 
-#include "Sony9PinRemote/util/DebugLog/DebugLogRestoreState.h"
+#include <DebugLogRestoreState.h>
 
 #endif  // HT_RS422_SONY9PINREMOTE_H

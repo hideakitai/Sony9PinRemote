@@ -95,5 +95,8 @@ jobs:
           sketch-paths: |
             - examples
           libraries: |
-            - name: Sony9PinRemote
+            - source-path: ./
+            - name: ArxContainer
+            - name: ArxTypeTraits
+            - name: DebugLog
           verbose: true
