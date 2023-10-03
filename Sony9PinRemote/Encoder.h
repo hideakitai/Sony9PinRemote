@@ -1420,6 +1420,6 @@ private:
 
 }  // namespace sony9pin
 
-#include "util/DebugLog/DebugLogRestoreState.h"
+#include <DebugLogRestoreState.h>
 
 #endif  // SONY9PINREMOTE_ENCODER_H
