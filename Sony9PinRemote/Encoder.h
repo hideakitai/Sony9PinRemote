@@ -38,7 +38,7 @@ public:
 #if ARX_HAVE_LIBSTDCPLUSPLUS >= 201103L  // Have libstdc++11
     using Packet = std::vector<uint8_t>;
 #else   // Do not have libstdc++11
-    using Packet = arx::vector<uint8_t, MAX_PACKET_SIZE>;
+    using Packet = arx::stdx::vector<uint8_t, MAX_PACKET_SIZE>;
 #endif  // Do not have libstdc++11
 
     // =============== 0 - System Control ===============
